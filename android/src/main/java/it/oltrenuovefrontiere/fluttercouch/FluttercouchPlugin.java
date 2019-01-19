@@ -4,7 +4,8 @@ import android.content.Context;
 import android.util.Log;
 
 import com.couchbase.lite.CouchbaseLiteException;
-import com.couchbase.lite.Query;
+// import com.couchbase.lite.Query;
+import com.couchbase.lite.android.AndroidContext;
 
 import org.json.JSONObject;
 
@@ -28,13 +29,13 @@ import static android.content.ContentValues.TAG;
 public class FluttercouchPlugin implements MethodCallHandler {
 
     CBManager mCbManager = null;
-    static Context context = null;
+    static AndroidContext context = null;
 
     /**
      * Plugin registration.
      */
     public static void registerWith(Registrar registrar) {
-        context = registrar.context();
+        context = getApplicationContext();
         mCbManager = CBManager.getInstance(context);
     
         final FluttercouchPlugin flutterCouchPlugin = new FluttercouchPlugin();
