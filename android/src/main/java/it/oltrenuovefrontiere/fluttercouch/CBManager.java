@@ -3,6 +3,7 @@ package it.oltrenuovefrontiere.fluttercouch;
 //import com.couchbase.lite.BasicAuthenticator;
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Manager;
+import com.couchbase.lite.android.AndroidContext;
 import com.couchbase.lite.Database;
 //import com.couchbase.lite.DatabaseConfiguration;
 import com.couchbase.lite.Document;
@@ -71,7 +72,8 @@ public class CBManager {
             try {
                 Document document = defaultDb.getDocument(_id);
                 if (document != null) {
-                    resultMap.put("doc", document.toMap());
+                    resultMap.put("doc", document.getProperties());
+                    // resultMap.put("doc", document.toMap());
                     resultMap.put("id", _id);
                 } else {
                     resultMap.put("doc", null);
