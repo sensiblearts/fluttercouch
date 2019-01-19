@@ -38,7 +38,11 @@ public class CBManager {
     private String defaultDatabase = "defaultDatabase";
 
     private CBManager(AndroidContext context) {
-        _manager = new Manager(context, Manager.DEFAULT_OPTIONS);
+             try {
+                _manager = new Manager(context, Manager.DEFAULT_OPTIONS);
+             } catch (Exception e) {
+                e.printStackTrace();
+            }
     }
 
     public static CBManager getInstance(AndroidContext context) {
