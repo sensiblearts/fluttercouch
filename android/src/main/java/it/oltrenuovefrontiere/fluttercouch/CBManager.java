@@ -20,6 +20,8 @@ import com.couchbase.lite.util.Log;
 //import com.couchbase.lite.URLEndpoint;
 //import com.couchbase.litecore.C4Replicator;
 
+import android.content.Context;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -27,18 +29,24 @@ import java.util.Map;
 
 public class CBManager {
     // https://dzone.com/articles/exploring-couchbase-mobile-on-android-crud
-    private Manager _manager = new Manager(new AndroidContext(getApplicationContext()), Manager.DEFAULT_OPTIONS);
+    private static Context _context = null;
+    private Manager _manager = null;
     
-    private static final CBManager mInstance = new CBManager();
+    private static final CBManager mInstance = null;
     private HashMap<String, Database> mDatabase = new HashMap<>();
 //    private ReplicatorConfiguration mReplConfig;
 //    private Replicator mReplicator;
     private String defaultDatabase = "defaultDatabase";
 
-    private CBManager() {
+    private CBManager(Context context) {
+        _manager = new Manager(context, Manager.DEFAULT_OPTIONS);
     }
 
-    public static CBManager getInstance() {
+    public static CBManager getInstance(Context context) {
+        if (mInstance == null) {
+            _context = context;
+            mInstance = new CBManager(context);
+        }
         return mInstance;
     }
 
