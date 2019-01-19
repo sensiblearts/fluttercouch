@@ -28,15 +28,17 @@ import static android.content.ContentValues.TAG;
  */
 public class FluttercouchPlugin implements MethodCallHandler {
 
-    CBManager mCbManager = null;
-    static AndroidContext context = null;
+    static CBManager mCbManager;
+    static AndroidContext androidContext;
+    static Context context;
 
     /**
      * Plugin registration.
      */
     public static void registerWith(Registrar registrar) {
-        context = getApplicationContext();
-        mCbManager = CBManager.getInstance(context);
+        context = registrar.context();
+        androidContext = new AndroidContext(context);
+        mCbManager = CBManager.getInstance(androidContext);
     
         final FluttercouchPlugin flutterCouchPlugin = new FluttercouchPlugin();
         final MethodChannel channel = new MethodChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouch");

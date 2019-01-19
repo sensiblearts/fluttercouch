@@ -31,7 +31,7 @@ public class CBManager {
     private static AndroidContext _context = null;
     private Manager _manager = null;
     
-    private static final CBManager mInstance = null;
+    private static CBManager mInstance = null;
     private HashMap<String, Database> mDatabase = new HashMap<>();
 //    private ReplicatorConfiguration mReplConfig;
 //    private Replicator mReplicator;
