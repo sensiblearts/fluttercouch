@@ -2,6 +2,7 @@ package it.oltrenuovefrontiere.fluttercouch;
 
 //import com.couchbase.lite.BasicAuthenticator;
 import com.couchbase.lite.CouchbaseLiteException;
+import com.couchbase.lite.Manager;
 import com.couchbase.lite.Database;
 //import com.couchbase.lite.DatabaseConfiguration;
 import com.couchbase.lite.Document;
@@ -24,6 +25,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CBManager {
+    // https://dzone.com/articles/exploring-couchbase-mobile-on-android-crud
+    private Manager _manager = new Manager(new AndroidContext(getApplicationContext()), Manager.DEFAULT_OPTIONS);
+    
     private static final CBManager mInstance = new CBManager();
     private HashMap<String, Database> mDatabase = new HashMap<>();
 //    private ReplicatorConfiguration mReplConfig;
@@ -80,14 +84,19 @@ public class CBManager {
         return resultMap;
     }
 
-//    public void initDatabaseWithName(String _name) throws CouchbaseLiteException {
-//        DatabaseConfiguration config = new DatabaseConfiguration(FluttercouchPlugin.context);
-//        if (!mDatabase.containsKey(_name)) {
-//            defaultDatabase = _name;
-//            // Database.setLogLevel(LogDomain.REPLICATOR, LogLevel.VERBOSE);
-//            mDatabase.put(_name, new Database(_name, config));
-//        }
-//    }
+   public void initDatabaseWithName(String _name) throws CouchbaseLiteException {
+    //    DatabaseConfiguration config = new DatabaseConfiguration(FluttercouchPlugin.context);
+    //    if (!mDatabase.containsKey(_name)) {
+    //        defaultDatabase = _name;
+    //        // Database.setLogLevel(LogDomain.REPLICATOR, LogLevel.VERBOSE);
+    //        mDatabase.put(_name, new Database(_name, config));
+    //    }
+       if (!mDatabase.containsKey(_name)) {
+           defaultDatabase = _name;
+           Database db = _manager.getDatabase(_name);
+           mDatabase.put(_name, db);
+       }
+   }
 
 //    public String setReplicatorEndpoint(String _endpoint) throws URISyntaxException {
 //        Endpoint targetEndpoint = new URLEndpoint(new URI(_endpoint));
