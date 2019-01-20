@@ -89,16 +89,13 @@ public class CBManager {
                     // resultMap.put("doc", document.toMap());
                     resultMap.put("id", _id);
                 } else {
-                    resultMap.put("doc", {"empty" : "doc"}); // null
+                    resultMap.put("doc", null);
                     resultMap.put("id", _id);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-                    resultMap.put("doc", {"null" : "doc"}); // null
-                    resultMap.put("id", _id);
-
         return resultMap;
     }
 
