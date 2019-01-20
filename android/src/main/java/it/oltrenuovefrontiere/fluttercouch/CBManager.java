@@ -26,6 +26,8 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
+// SEE: https://docs.couchbase.com/couchbase-lite/1.4/java.html#manager
+
 public class CBManager {
     // https://dzone.com/articles/exploring-couchbase-mobile-on-android-crud
     private static AndroidContext _context = null;
@@ -35,7 +37,7 @@ public class CBManager {
     private HashMap<String, Database> mDatabase = new HashMap<>();
 //    private ReplicatorConfiguration mReplConfig;
 //    private Replicator mReplicator;
-    private String defaultDatabase = "defaultDatabase";
+    private String defaultDatabase = "defaultdatabase";
 
     private CBManager(AndroidContext context) {
              try {
@@ -77,7 +79,7 @@ public class CBManager {
     }
 
     public Map<String, Object> getDocumentWithId(String _id) throws CouchbaseLiteException {
-        Database defaultDb = getDatabase();
+        Database defaultDb = mDatabase.get(defaultDatabase);
         HashMap<String, Object> resultMap = new HashMap<String, Object>();
         if (defaultDatabase != null) {
             try {
