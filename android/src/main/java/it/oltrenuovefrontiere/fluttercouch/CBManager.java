@@ -81,7 +81,7 @@ public class CBManager {
     public Map<String, Object> getDocumentWithId(String _id) throws CouchbaseLiteException {
         Database defaultDb = mDatabase.get(defaultDatabase);
         HashMap<String, Object> resultMap = new HashMap<String, Object>();
-        if (defaultDatabase != null) {
+        if (defaultDb != null) {
             try {
                 Document document = defaultDb.getDocument(_id);
                 if (document != null) {
@@ -89,13 +89,16 @@ public class CBManager {
                     // resultMap.put("doc", document.toMap());
                     resultMap.put("id", _id);
                 } else {
-                    resultMap.put("doc", null);
+                    resultMap.put("doc", {"empty" : "doc"}); // null
                     resultMap.put("id", _id);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+                    resultMap.put("doc", {"null" : "doc"}); // null
+                    resultMap.put("id", _id);
+
         return resultMap;
     }
 
