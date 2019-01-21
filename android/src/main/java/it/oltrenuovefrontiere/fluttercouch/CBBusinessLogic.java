@@ -5,7 +5,10 @@ import android.util.Log;
 
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
-// import com.couchbase.lite.Query;
+import com.couchbase.lite.Query;
+import com.couchbase.lite.QueryRow;
+import com.couchbase.lite.QueryEnumerator;
+import com.couchbase.lite.Document;
 // import com.couchbase.lite.android.AndroidContext;
 
 import org.json.JSONObject;
@@ -13,6 +16,8 @@ import org.json.JSONObject;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.JSONMethodCodec;
@@ -89,19 +94,36 @@ public class CBBusinessLogic {
     // TODO: Then, fugure out how to use the flutter ListViewBuilder to
     // send `limit` and `skip` values to getAllEntries, for pagination.
     //
-     private String getAllEntries() {
-        // Database defaultDb = mDatabase.get(defaultDatabase);
-        // use: mDatabase
-        String resultMap = "";
+     private ArrayList<Map<String, Object>> getAllEntries() {
+        ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         if (mCbManager != null) { // needed?
-            // Database db = mCbManager.getDatabase();
+            Database db = mCbManager.getDatabase();
+            // Query query = database.getView("postsByDate").createQuery();
+            // if using a View, use as above.
+            Query query = db.createAllDocumentsQuery();
+            query.setDescending(true);
+            // query.setLimit(20);
+            // startKey: the key to start at. The default value, null, means to start from the beginning.
+            // endKey: the last key to return. The default value, null, means to continue to the end.
+            // descending: If set to true, the keys will be returned in reverse order. (This also reverses the meanings of the startKey and endKey properties, since the query will now start at the highest keys and end at lower ones!)
+            // limit: If nonzero, this is the maximum number of rows that will be returned.
+            // skip: If nonzero, this many rows will be skipped (starting from the startKey if any.)
             try {
-                resultMap = "getAllEntries called successfully";
+                // resultMap = "getAllEntries called successfully";
+                QueryEnumerator result = query.run();
+                for (Iterator<QueryRow> it = result; it.hasNext(); ) {
+                    QueryRow row = it.next();
+                    // if (row.getConflictingRevisions().size() > 0) {
+                    //     Log.w("MYAPP", "Conflict in document: %s", row.getDocumentId());
+                    //     beginConflictResolution(row.getDocument());
+                    // }
+                    results.add(row.getDocument().getProperties());
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        return resultMap;
+        return results;
     }
 
     public void handleCall(MethodCall call, Result result) {

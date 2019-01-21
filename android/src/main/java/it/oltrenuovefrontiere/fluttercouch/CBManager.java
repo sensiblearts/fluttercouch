@@ -78,6 +78,11 @@ public class CBManager {
         return doc.getId();
     }
 
+    public boolean deleteDocumentWithId(String _id) throws CouchbaseLiteException {
+        Document doc = mDatabase.get(defaultDatabase).getDocument(_id);
+        return doc.delete();
+    }
+
     public Map<String, Object> getDocumentWithId(String _id) throws CouchbaseLiteException {
         Database defaultDb = mDatabase.get(defaultDatabase);
         HashMap<String, Object> resultMap = new HashMap<String, Object>();

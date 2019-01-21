@@ -20,9 +20,9 @@ abstract class Fluttercouch {
     }
   }
 
-  Future<String> getAllEntries() async {
+  Future<List<dynamic>> getAllEntries() async {
      try {
-      final String result =
+      final List<dynamic> result =
       await _methodChannel.invokeMethod('getAllEntries');
       return result;
     } on PlatformException {
@@ -75,6 +75,11 @@ abstract class Fluttercouch {
     Map<dynamic, dynamic> _docResult;
     _docResult = await _getDocumentWithId(_id);
     return Document(_docResult["doc"], _docResult["id"]);
+  }
+
+  Future<bool> deleteDocumentWithId(String _id) async {
+    bool result = await _deleteDocumentWithId(_id);
+    return result;
   }
 
   Future<String> setReplicatorEndpoint(String _endpoint) async {
@@ -157,6 +162,16 @@ abstract class Fluttercouch {
       return result;
     } on PlatformException {
       throw 'unable to get the document with id $_id';
+    }
+  }
+
+  Future<bool> _deleteDocumentWithId(String _id) async {
+    try {
+      final bool result =
+      await _methodChannel.invokeMethod('deleteDocumentWithId', _id);
+      return result;
+    } on PlatformException {
+      throw 'unable to delete the document with id $_id';
     }
   }
 

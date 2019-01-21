@@ -101,6 +101,15 @@ public class FluttercouchPlugin implements MethodCallHandler {
                     result.error("errGet", "error getting the document with id: " + _id, e.toString());
                 }
                 break;
+            case ("deleteDocumentWithId"):
+                String _idd = call.arguments(); // why won't _id work..????
+                try {
+                    result.success(mCbManager.deleteDocumentWithId(_idd));
+                } catch (CouchbaseLiteException e) {
+                    e.printStackTrace();
+                    result.error("errDel", "error deleting the document with id: " + _idd, e.toString());
+                }
+                break;
             // case ("setReplicatorEndpoint"):
             //     String _endpoint = call.arguments();
             //     try {
