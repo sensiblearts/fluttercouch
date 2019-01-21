@@ -4,8 +4,9 @@ import android.content.Context;
 import android.util.Log;
 
 import com.couchbase.lite.CouchbaseLiteException;
+import com.couchbase.lite.Database;
 // import com.couchbase.lite.Query;
-import com.couchbase.lite.android.AndroidContext;
+// import com.couchbase.lite.android.AndroidContext;
 
 import org.json.JSONObject;
 
@@ -24,82 +25,99 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 import static android.content.ContentValues.TAG;
 
 /**
- * FluttercouchPlugin
+ * CBBusinessLogic
  */
-public class FluttercouchPlugin implements MethodCallHandler {
+// public class CBBusinessLogic implements MethodCallHandler {
+public class CBBusinessLogic {
 
-    static CBManager mCbManager;
-    static CBBusinessLogic mCbBusinessLogic;
-    static AndroidContext androidContext;
-    static Context context;
-
-    /**
-     * Plugin registration.
-     */
-    public static void registerWith(Registrar registrar) {
-        context = registrar.context();
-        androidContext = new AndroidContext(context);
-        mCbManager = CBManager.getInstance(androidContext);
-        mCbBusinessLogic = CBBusinessLogic.getInstance(mCbManager);
-    
-        final FluttercouchPlugin flutterCouchPlugin = new FluttercouchPlugin();
-        final MethodChannel channel = new MethodChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouch");
-        channel.setMethodCallHandler(flutterCouchPlugin);
-
-        //final MethodChannel jsonChannel = new MethodChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouchJson", JSONMethodCodec.INSTANCE);
-        //jsonChannel.setMethodCallHandler(new FluttercouchPlugin());
-
-        // D.A. removed
-        // final EventChannel eventChannel = new EventChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouch/replicationEventChannel");
-        // eventChannel.setStreamHandler(new ReplicationEventListener(flutterCouchPlugin.mCbManager));
+    private static CBManager mCbManager;
+    private static CBBusinessLogic mInstance;
+   
+    private CBBusinessLogic(CBManager manager) {
+        mCbManager = manager;
     }
 
-    @Override
-    public void onMethodCall(MethodCall call, Result result) {
+    public static CBBusinessLogic getInstance(CBManager manager) {
+        if (mInstance == null) {
+            mInstance = new CBBusinessLogic(manager);
+        }
+        return mInstance;
+    }
+
+
+    // public static void registerWith(Registrar registrar) {
+    //     context = registrar.context();
+    //     androidContext = new AndroidContext(context);
+    //     mCbManager = CBManager.getInstance(androidContext);
+    
+    //     final FluttercouchPlugin flutterCouchPlugin = new FluttercouchPlugin();
+    //     final MethodChannel channel = new MethodChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouch");
+    //     channel.setMethodCallHandler(flutterCouchPlugin);
+
+    //     //final MethodChannel jsonChannel = new MethodChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouchJson", JSONMethodCodec.INSTANCE);
+    //     //jsonChannel.setMethodCallHandler(new FluttercouchPlugin());
+
+    //     // D.A. removed
+    //     // final EventChannel eventChannel = new EventChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouch/replicationEventChannel");
+    //     // eventChannel.setStreamHandler(new ReplicationEventListener(flutterCouchPlugin.mCbManager));
+    // }
+
+
+    // private Map<String, Object> getAllEntries() throws CouchbaseLiteException {
+    //     Database defaultDb = mDatabase.get(defaultDatabase);
+    //     HashMap<String, Object> resultMap = new HashMap<String, Object>();
+    //     if (defaultDb != null) {
+    //         try {
+    //             Document document = defaultDb.getDocument(_id);
+    //             if (document != null) {
+    //                 resultMap.put("doc", document.getProperties());
+    //                 // resultMap.put("doc", document.toMap());
+    //                 resultMap.put("id", _id);
+    //             } else {
+    //                 resultMap.put("doc", null);
+    //                 resultMap.put("id", _id);
+    //             }
+    //         } catch (Exception e) {
+    //             e.printStackTrace();
+    //         }
+    //     }
+    //     return resultMap;
+    // }
+
+    // TODO: modify getAllEntries to Query Alldocs and return a 
+    // List<  Map<String, Object> >
+    // TODO: Then, fugure out how to use the flutter ListViewBuilder to
+    // send `limit` and `skip` values to getAllEntries, for pagination.
+    //
+     private String getAllEntries() {
+        // Database defaultDb = mDatabase.get(defaultDatabase);
+        // use: mDatabase
+        String resultMap = "";
+        if (mCbManager != null) { // needed?
+            // Database db = mCbManager.getDatabase();
+            try {
+                resultMap = "getAllEntries called successfully";
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return resultMap;
+    }
+
+    public void handleCall(MethodCall call, Result result) {
         switch (call.method) {
-            case ("initDatabaseWithName"):
-                String _name = call.arguments();
-                try {
-                    mCbManager.initDatabaseWithName(_name);
-                    result.success(_name);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    result.error("errInit", "error initializing database", e.toString());
-                }
-                break;
-            case ("saveDocument"):
-                Map<String, Object> _document = call.arguments();
-                try {
-                    String returnedId = mCbManager.saveDocument(_document);
-                    result.success(returnedId);
-                } catch (CouchbaseLiteException e) {
-                    e.printStackTrace();
-                    result.error("errSave", "error saving the document", e.toString());
-                }
-                break;
-            case ("saveDocumentWithId"):
-                if (call.hasArgument("id") && call.hasArgument("map")) {
-                    String _id = call.argument("id");
-                    Map<String, Object> _map = call.argument("map");
-                    try {
-                        String returnedId = mCbManager.saveDocumentWithId(_id, _map);
-                        result.success(returnedId);
-                    } catch (CouchbaseLiteException e) {
-                        e.printStackTrace();
-                        result.error("errSave", "error saving the document", e.toString());
-                    }
-                } else {
-                    result.error("errArg", "invalid arguments", null);
-                }
-                break;
-            case ("getDocumentWithId"):
-                String _id = call.arguments();
-                try {
-                    result.success(mCbManager.getDocumentWithId(_id));
-                } catch (CouchbaseLiteException e) {
-                    e.printStackTrace();
-                    result.error("errGet", "error getting the document with id: " + _id, e.toString());
-                }
+            case ("getAllEntries"):
+                // String _id = call.arguments();
+                // try {
+                    // result.success(mCbManager.getDocumentWithId(_id));
+                    result.success(getAllEntries());
+                // } catch (CouchbaseLiteException e) {
+                //     e.printStackTrace();
+                //     result.error("errAll", "error getting all entries", e.toString());
+                // }
+
+
+                
                 break;
             // case ("setReplicatorEndpoint"):
             //     String _endpoint = call.arguments();
@@ -174,13 +192,7 @@ public class FluttercouchPlugin implements MethodCallHandler {
             //     Query queryFromJson = new QueryJson(queryJson).toCouchbaseQuery();
             //     break;
             default:
-                // result.notImplemented();
-                // try {
-                    mCbBusinessLogic.handleCall(call, result);
-                // } catch (CouchbaseLiteException e) {
-                //     e.printStackTrace();
-                //     result.error("errCall", "error: " + call.method, e.toString());
-                // }
+                result.notImplemented();
         }
     }
 }

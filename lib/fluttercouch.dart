@@ -20,6 +20,38 @@ abstract class Fluttercouch {
     }
   }
 
+  Future<String> getAllEntries() async {
+     try {
+      final String result =
+      await _methodChannel.invokeMethod('getAllEntries');
+      return result;
+    } on PlatformException {
+      throw 'unable to get all entries';
+    }
+  }
+  // TODO: implement as below:
+
+  // Future< List<Document> > getAllEntries() async {
+  //   List< Map<dynamic, dynamic>> _allEntries;
+  //   _allEntries = await _getAllEntries();
+  //   List<Document> allEntries = [];
+  //   // loop and add
+  //   _allEntries.forEach((e){
+  //     allEntries.add(Document(e["doc"], e["id"]));
+  //   });
+  //   return allEntries;
+  // }
+
+  //   Future<List< Map<dynamic, dynamic>>> _getAllEntries() async {
+  //   try {
+  //     final List< Map<dynamic, dynamic>> result =
+  //     await _methodChannel.invokeMethod('getAllEntries');
+  //     return result;
+  //   } on PlatformException {
+  //     throw 'unable to get the document with id $_id';
+  //   }
+  // }
+
   Future<String> saveDocument(Document _doc) async {
     try {
       final String result = await _methodChannel.invokeMethod('saveDocument', _doc.toMap());
