@@ -77,6 +77,13 @@ abstract class Fluttercouch {
     return Document(_docResult["doc"], _docResult["id"]);
   }
 
+  Future<bool> updateDocumentWithId(String _id, Document _doc) async {
+      final bool updated =
+      await _methodChannel.invokeMethod('updateDocumentWithId', <String, dynamic>{'id': _id, 'map': _doc.toMap()});
+      return updated;
+      
+  }
+
   Future<bool> deleteDocumentWithId(String _id) async {
     bool result = await _deleteDocumentWithId(_id);
     return result;

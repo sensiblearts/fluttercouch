@@ -78,9 +78,18 @@ public class CBManager {
         return doc.getId();
     }
 
-    public boolean deleteDocumentWithId(String _id) throws CouchbaseLiteException {
+    public boolean updateDocumentWithId(String _id, Map<String, Object> _map) throws CouchbaseLiteException {
         Document doc = mDatabase.get(defaultDatabase).getDocument(_id);
-        return doc.delete();
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.putAll(_map);
+        boolean result = false;
+        try {
+            doc.putProperties(properties);
+            result = true;
+        } catch (CouchbaseLiteException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     public Map<String, Object> getDocumentWithId(String _id) throws CouchbaseLiteException {
@@ -104,7 +113,12 @@ public class CBManager {
         return resultMap;
     }
 
-   public void initDatabaseWithName(String _name) throws CouchbaseLiteException {
+    public boolean deleteDocumentWithId(String _id) throws CouchbaseLiteException {
+        Document doc = mDatabase.get(defaultDatabase).getDocument(_id);
+        return doc.delete();
+    }
+    
+    public void initDatabaseWithName(String _name) throws CouchbaseLiteException {
     //    DatabaseConfiguration config = new DatabaseConfiguration(FluttercouchPlugin.context);
     //    if (!mDatabase.containsKey(_name)) {
     //        defaultDatabase = _name;

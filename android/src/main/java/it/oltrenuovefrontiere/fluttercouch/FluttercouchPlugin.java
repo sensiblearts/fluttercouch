@@ -56,6 +56,7 @@ public class FluttercouchPlugin implements MethodCallHandler {
 
     @Override
     public void onMethodCall(MethodCall call, Result result) {
+        String _id;
         switch (call.method) {
             case ("initDatabaseWithName"):
                 String _name = call.arguments();
@@ -79,7 +80,7 @@ public class FluttercouchPlugin implements MethodCallHandler {
                 break;
             case ("saveDocumentWithId"):
                 if (call.hasArgument("id") && call.hasArgument("map")) {
-                    String _id = call.argument("id");
+                    _id = call.argument("id");
                     Map<String, Object> _map = call.argument("map");
                     try {
                         String returnedId = mCbManager.saveDocumentWithId(_id, _map);
@@ -93,7 +94,7 @@ public class FluttercouchPlugin implements MethodCallHandler {
                 }
                 break;
             case ("getDocumentWithId"):
-                String _id = call.arguments();
+                _id = call.arguments();
                 try {
                     result.success(mCbManager.getDocumentWithId(_id));
                 } catch (CouchbaseLiteException e) {
@@ -101,13 +102,28 @@ public class FluttercouchPlugin implements MethodCallHandler {
                     result.error("errGet", "error getting the document with id: " + _id, e.toString());
                 }
                 break;
+            case ("updateDocumentWithId"):
+                if (call.hasArgument("id") && call.hasArgument("map")) {
+                    _id = call.argument("id");
+                    Map<String, Object> _map = call.argument("map");
+                    try {
+                        Boolean updated = mCbManager.updateDocumentWithId(_id, _map);
+                        result.success(updated);
+                    } catch (CouchbaseLiteException e) {
+                        e.printStackTrace();
+                        result.error("errUpdate", "error updating the document", e.toString());
+                    }
+                } else {
+                    result.error("errArg", "invalid arguments", null);
+                }
+                break;
             case ("deleteDocumentWithId"):
-                String _idd = call.arguments(); // why won't _id work..????
+                _id = call.arguments(); 
                 try {
-                    result.success(mCbManager.deleteDocumentWithId(_idd));
+                    result.success(mCbManager.deleteDocumentWithId(_id));
                 } catch (CouchbaseLiteException e) {
                     e.printStackTrace();
-                    result.error("errDel", "error deleting the document with id: " + _idd, e.toString());
+                    result.error("errDel", "error deleting the document with id: " + _id, e.toString());
                 }
                 break;
             // case ("setReplicatorEndpoint"):
