@@ -1,3 +1,9 @@
+# BROKEN -- WORK IN PROGRESS
+
+This is a explortation of porting fluttercouch for Couchbase-lite 1.4.4.
+
+(The original fluttercouch documentation is below; however it does not apply to the code in this repository.)
+
 # Fluttercouch
 With Fluttercouch is possible to use Couchbase Mobile Native SDK in Flutter Projects.
 
