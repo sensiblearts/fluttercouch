@@ -49,7 +49,7 @@ public class FluttercouchPlugin implements MethodCallHandler {
         //final MethodChannel jsonChannel = new MethodChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouchJson", JSONMethodCodec.INSTANCE);
         //jsonChannel.setMethodCallHandler(new FluttercouchPlugin());
 
-        // D.A. removed
+        // D.A. removed for now
         // final EventChannel eventChannel = new EventChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouch/replicationEventChannel");
         // eventChannel.setStreamHandler(new ReplicationEventListener(flutterCouchPlugin.mCbManager));
     }
@@ -71,8 +71,8 @@ public class FluttercouchPlugin implements MethodCallHandler {
             case ("saveDocument"):
                 Map<String, Object> _document = call.arguments();
                 try {
-                    String returnedId = mCbManager.saveDocument(_document);
-                    result.success(returnedId);
+                    Map<String,String> idAndRev = mCbManager.saveDocument(_document);
+                    result.success(idAndRev);
                 } catch (CouchbaseLiteException e) {
                     e.printStackTrace();
                     result.error("errSave", "error saving the document", e.toString());
@@ -83,8 +83,8 @@ public class FluttercouchPlugin implements MethodCallHandler {
                     _id = call.argument("id");
                     Map<String, Object> _map = call.argument("map");
                     try {
-                        String returnedId = mCbManager.saveDocumentWithId(_id, _map);
-                        result.success(returnedId);
+                        Map<String,String> idAndRev = mCbManager.saveDocumentWithId(_id, _map);
+                        result.success(idAndRev);
                     } catch (CouchbaseLiteException e) {
                         e.printStackTrace();
                         result.error("errSave", "error saving the document", e.toString());
@@ -107,8 +107,8 @@ public class FluttercouchPlugin implements MethodCallHandler {
                     _id = call.argument("id");
                     Map<String, Object> _map = call.argument("map");
                     try {
-                        Boolean updated = mCbManager.updateDocumentWithId(_id, _map);
-                        result.success(updated);
+                        Map<String,String> idAndRev = mCbManager.updateDocumentWithId(_id, _map);
+                        result.success(idAndRev);
                     } catch (CouchbaseLiteException e) {
                         e.printStackTrace();
                         result.error("errUpdate", "error updating the document", e.toString());
@@ -199,13 +199,7 @@ public class FluttercouchPlugin implements MethodCallHandler {
             //     Query queryFromJson = new QueryJson(queryJson).toCouchbaseQuery();
             //     break;
             default:
-                // result.notImplemented();
-                // try {
-                    mCbBusinessLogic.handleCall(call, result);
-                // } catch (CouchbaseLiteException e) {
-                //     e.printStackTrace();
-                //     result.error("errCall", "error: " + call.method, e.toString());
-                // }
-        }
+                mCbBusinessLogic.handleCall(call, result);
+            }
     }
 }

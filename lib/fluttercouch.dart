@@ -20,50 +20,30 @@ abstract class Fluttercouch {
     }
   }
 
-  Future<List<dynamic>> getAllEntries() async {
+  Future<bool> initView(String view) async {
      try {
-      final List<dynamic> result =
-      await _methodChannel.invokeMethod('getAllEntries');
+      final bool result =
+      await _methodChannel.invokeMethod('initView', view);
       return result;
     } on PlatformException {
-      throw 'unable to get all entries';
+      throw 'unable to init view:' + view;
     }
   }
-  // TODO: implement as below:
 
-  // Future< List<Document> > getAllEntries() async {
-  //   List< Map<dynamic, dynamic>> _allEntries;
-  //   _allEntries = await _getAllEntries();
-  //   List<Document> allEntries = [];
-  //   // loop and add
-  //   _allEntries.forEach((e){
-  //     allEntries.add(Document(e["doc"], e["id"]));
-  //   });
-  //   return allEntries;
-  // }
-
-  //   Future<List< Map<dynamic, dynamic>>> _getAllEntries() async {
-  //   try {
-  //     final List< Map<dynamic, dynamic>> result =
-  //     await _methodChannel.invokeMethod('getAllEntries');
-  //     return result;
-  //   } on PlatformException {
-  //     throw 'unable to get the document with id $_id';
-  //   }
-  // }
-
-  Future<String> saveDocument(Document _doc) async {
+  // returns {"_id": _id, "_rev": _rev}
+  Future<Map<dynamic,dynamic>> saveDocument(Document _doc) async {
     try {
-      final String result = await _methodChannel.invokeMethod('saveDocument', _doc.toMap());
+      final Map<dynamic,dynamic> result = await _methodChannel.invokeMethod('saveDocument', _doc.toMap());
       return result;
     } on PlatformException {
       throw 'unable to save the document';
     }
   }
 
-  Future<String> saveDocumentWithId(String _id, Document _doc) async {
+  // returns {"_id": _id, "_rev": _rev}
+  Future<Map<dynamic,dynamic>> saveDocumentWithId(String _id, Document _doc) async {
     try {
-      final String result = await _methodChannel.invokeMethod(
+      final Map<dynamic,dynamic> result = await _methodChannel.invokeMethod(
           'saveDocumentWithId', <String, dynamic>{'id': _id, 'map': _doc.toMap()});
       return result;
     } on PlatformException {
@@ -77,11 +57,11 @@ abstract class Fluttercouch {
     return Document(_docResult["doc"], _docResult["id"]);
   }
 
-  Future<bool> updateDocumentWithId(String _id, Document _doc) async {
-      final bool updated =
+  // returns {"_id": _id, "_rev": _rev}
+  Future<Map<dynamic,dynamic>> updateDocumentWithId(String _id, Document _doc) async {
+      final Map<dynamic,dynamic> updated =
       await _methodChannel.invokeMethod('updateDocumentWithId', <String, dynamic>{'id': _id, 'map': _doc.toMap()});
       return updated;
-      
   }
 
   Future<bool> deleteDocumentWithId(String _id) async {
@@ -185,4 +165,21 @@ abstract class Fluttercouch {
   void listenReplicationEvents(Function(dynamic) function) {
     _replicationEventChannel.receiveBroadcastStream().listen(function);
   }
+
+  ///////////////////////////////////////////////////////////////////////
+  ///
+  /// App-specific methods to customize this plugin
+  ///
+  //////////////////////////////////////////////////////////////////////
+  
+    Future<List<dynamic>> getAllEntries() async {
+     try {
+      final List<dynamic> result =
+      await _methodChannel.invokeMethod('getAllEntries');
+      return result;
+    } on PlatformException {
+      throw 'unable to get all entries';
+    }
+  }
+  
 }

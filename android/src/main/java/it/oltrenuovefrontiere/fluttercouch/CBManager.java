@@ -28,8 +28,9 @@ import java.util.Map;
 
 // SEE: https://docs.couchbase.com/couchbase-lite/1.4/java.html#manager
 
+// TODO: Bring back replicator functionality for cb 1.4.4
+
 public class CBManager {
-    // https://dzone.com/articles/exploring-couchbase-mobile-on-android-crud
     private static AndroidContext _context = null;
     private Manager _manager = null;
     
@@ -66,30 +67,39 @@ public class CBManager {
         return null;
     }
 
-    public String saveDocument(Map<String, Object> _map) throws CouchbaseLiteException {
+     public Map<String, String> saveDocument(Map<String, Object> _map) throws CouchbaseLiteException {
+        HashMap<String, String> resultMap = new HashMap<String, String>();
         Document doc = mDatabase.get(defaultDatabase).createDocument();
         doc.putProperties(_map);
-        return doc.getId();
+        resultMap.put("_id", doc.getId());
+        resultMap.put("_rev", (String)doc.getProperties().get("_rev"));
+        return resultMap;
     }
 
-    public String saveDocumentWithId(String _id, Map<String, Object> _map) throws CouchbaseLiteException {
+    public Map<String, String> saveDocumentWithId(String _id, Map<String, Object> _map) throws CouchbaseLiteException {
+        HashMap<String, String> resultMap = new HashMap<String, String>();
         Document doc = mDatabase.get(defaultDatabase).getDocument(_id);
         doc.putProperties(_map);
-        return doc.getId();
+        resultMap.put("_id", doc.getId());
+        resultMap.put("_rev", (String)doc.getProperties().get("_rev"));
+        return resultMap;
     }
 
-    public boolean updateDocumentWithId(String _id, Map<String, Object> _map) throws CouchbaseLiteException {
+    public Map<String, String> updateDocumentWithId(String _id, Map<String, Object> _map) throws CouchbaseLiteException {
+        HashMap<String, String> resultMap = new HashMap<String, String>();
         Document doc = mDatabase.get(defaultDatabase).getDocument(_id);
         Map<String, Object> properties = new HashMap<String, Object>();
         properties.putAll(_map);
-        boolean result = false;
         try {
             doc.putProperties(properties);
-            result = true;
+            resultMap.put("_id", doc.getId());
+            resultMap.put("_rev", (String)doc.getProperties().get("_rev"));
         } catch (CouchbaseLiteException e) {
             e.printStackTrace();
+            resultMap.put("_id", null);
+            resultMap.put("_rev", null);
         }
-        return result;
+        return resultMap;
     }
 
     public Map<String, Object> getDocumentWithId(String _id) throws CouchbaseLiteException {
