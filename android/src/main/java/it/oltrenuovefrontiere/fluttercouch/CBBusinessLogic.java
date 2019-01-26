@@ -10,8 +10,10 @@ import com.couchbase.lite.Mapper;
 import com.couchbase.lite.Emitter;
 import com.couchbase.lite.Query;
 import com.couchbase.lite.QueryRow;
+import com.couchbase.lite.Predicate;
 import com.couchbase.lite.QueryEnumerator;
 import com.couchbase.lite.Document;
+import com.couchbase.lite.support.LazyJsonArray;
 // import com.couchbase.lite.android.AndroidContext;
 
 import org.json.JSONObject;
@@ -61,8 +63,8 @@ public class CBBusinessLogic {
     private Boolean initEntriesView() {
         if (mCbManager != null) { // needed?
             Database db = mCbManager.getDatabase();
-            View entryView = db.getView("entries");
-            entryView.setMap(new Mapper() {
+            View view = db.getView("entries");
+            view.setMap(new Mapper() {
                 @Override
                 public void map(Map<String, Object> document, Emitter emitter) {
                     if (document.get("doc").equals("ent")) { // is entry
@@ -72,7 +74,7 @@ public class CBBusinessLogic {
                         emitter.emit(key, null);
                     }
                 }
-            }, "1");
+            }, "2");
             return true;
         } else {
             return false;
@@ -81,7 +83,7 @@ public class CBBusinessLogic {
 
     // App-specific CB-lite 1.4.4 Query on View for "entries"
     //
-    private ArrayList<Map<String, Object>> getAllEntries() {
+    private ArrayList<Map<String, Object>> getEntries() {
         ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         if (mCbManager != null) { // needed?
             Database db = mCbManager.getDatabase();
@@ -109,7 +111,112 @@ public class CBBusinessLogic {
         }
         return results;
     }
+
+    private Boolean initCategoriesView() {
+        if (mCbManager != null) { // needed?
+            Database db = mCbManager.getDatabase();
+            View view = db.getView("categories");
+            view.setMap(new Mapper() {
+                @Override
+                public void map(Map<String, Object> document, Emitter emitter) {
+                    if (document.get("doc").equals("cat")) { // is category
+                        List<Object> key = new ArrayList<Object>();
+                        key.add(document.get("title"));
+                        emitter.emit(key, null);
+                    }
+                }
+            }, "2");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private ArrayList<Map<String, Object>> getCategories() {
+        ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
+        if (mCbManager != null) { // needed?
+            Database db = mCbManager.getDatabase();
+            Query query = db.getView("categories").createQuery();
+            // query.setDescending(false);
+            try {
+                QueryEnumerator result = query.run();
+                for (Iterator<QueryRow> it = result; it.hasNext(); ) {
+                    QueryRow row = it.next();
+                    results.add(row.getDocument().getProperties());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return results;
+    }
    
+    private Boolean initLabelsView() {
+        if (mCbManager != null) { // needed?
+            Database db = mCbManager.getDatabase();
+            View view = db.getView("labels");
+            view.setMap(new Mapper() {
+                @Override
+                public void map(Map<String, Object> document, Emitter emitter) {
+                    if (document.get("doc").equals("lab")) { // is label
+                        List<Object> key = new ArrayList<Object>();
+                        key.add(document.get("categoryId"));
+                        key.add(document.get("title"));
+                        emitter.emit(key, null); 
+                    }
+                }
+            }, "2");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public class CatgoryFilter implements Predicate<QueryRow> {
+        private String uuid;
+        public CatgoryFilter(String categoryId) {
+            this.uuid = categoryId;
+        }
+        public boolean apply(QueryRow row) {
+            // Weird that this is the way you have to do it..
+            LazyJsonArray<Object> keys = (LazyJsonArray<Object>)row.getKey();
+            if (this.uuid.equals((String)keys.get(0))) { // categoryId
+                return true;
+            } else {
+                // System.out.println("No match.");
+                // System.out.println(this.uuid);
+                // System.out.println((String)keys.get(0));
+                // System.out.println((String)keys.get(1));
+                return false;
+            }
+        }
+    }
+    // Predicate<QueryRow> postFilterAll = new Predicate<QueryRow>(){
+    //         public boolean apply(QueryRow type){
+    //             return true;
+    //         }
+    //     };
+
+    private ArrayList<Map<String, Object>> getLabels(String categoryId) {
+        ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
+        if (mCbManager != null) { // needed?
+            Database db = mCbManager.getDatabase();
+            Query query = db.getView("labels").createQuery();
+            query.setPostFilter(new CatgoryFilter(categoryId));
+            // query.setDescending(false);
+            try {
+                QueryEnumerator result = query.run();
+                for (Iterator<QueryRow> it = result; it.hasNext(); ) {
+                    QueryRow row = it.next();
+                    results.add(row.getDocument().getProperties());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return results;
+    }
+
     public void handleCall(MethodCall call, Result result) {
         switch (call.method) {
             case ("initView"):
@@ -118,12 +225,25 @@ public class CBBusinessLogic {
                     case ("entries"):
                         result.success(initEntriesView());
                         break;
+                    case ("categories"):
+                        result.success(initCategoriesView());
+                        break;
+                    case ("labels"):
+                        result.success(initLabelsView());
+                        break;
                     default:
                         result.success(false);    
                 }
                 break;
-            case ("getAllEntries"):
-                result.success(getAllEntries());
+            case ("getEntries"):
+                result.success(getEntries());
+                break;
+            case ("getCategories"):
+                result.success(getCategories());
+                break;
+            case ("getLabels"):
+                String categoryId = call.argument("categoryId");
+                result.success(getLabels(categoryId));
                 break;
             default:
                 result.notImplemented();

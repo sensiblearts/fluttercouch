@@ -172,14 +172,34 @@ abstract class Fluttercouch {
   ///
   //////////////////////////////////////////////////////////////////////
   
-    Future<List<dynamic>> getAllEntries() async {
+  Future<List<dynamic>> getEntries() async {
      try {
       final List<dynamic> result =
-      await _methodChannel.invokeMethod('getAllEntries');
+      await _methodChannel.invokeMethod('getEntries');
       return result;
     } on PlatformException {
       throw 'unable to get all entries';
     }
   }
+
+  Future<List<dynamic>> getCategories() async {
+     try {
+      final List<dynamic> result =
+      await _methodChannel.invokeMethod('getCategories');
+      return result;
+    } on PlatformException {
+      throw 'unable to get all categories';
+    }
+  }
   
+    Future<List<dynamic>> getLabels(String categoryId) async {
+     try {
+      final List<dynamic> result =
+      await _methodChannel.invokeMethod('getLabels', <String, dynamic>{'categoryId': categoryId});
+      return result;
+    } on PlatformException {
+      throw 'unable to get labels for category: $categoryId';
+    }
+  }
+
 }

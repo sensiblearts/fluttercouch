@@ -88,6 +88,7 @@ public class CBManager {
     public Map<String, String> updateDocumentWithId(String _id, Map<String, Object> _map) throws CouchbaseLiteException {
         HashMap<String, String> resultMap = new HashMap<String, String>();
         Document doc = mDatabase.get(defaultDatabase).getDocument(_id);
+        // TODO: doc valid? exist?
         Map<String, Object> properties = new HashMap<String, Object>();
         properties.putAll(_map);
         try {
