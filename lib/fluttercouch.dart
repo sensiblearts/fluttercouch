@@ -172,6 +172,16 @@ abstract class Fluttercouch {
   ///
   //////////////////////////////////////////////////////////////////////
   
+  Future<List<dynamic>> getPaperJournals() async {
+     try {
+      final List<dynamic> result =
+      await _methodChannel.invokeMethod('getPapers');
+      return result;
+    } on PlatformException {
+      throw 'unable to get all papers';
+    }
+  }
+
   Future<List<dynamic>> getEntries() async {
      try {
       final List<dynamic> result =
@@ -192,7 +202,7 @@ abstract class Fluttercouch {
     }
   }
   
-    Future<List<dynamic>> getLabels(String categoryId) async {
+  Future<List<dynamic>> getLabels(String categoryId) async {
      try {
       final List<dynamic> result =
       await _methodChannel.invokeMethod('getLabels', <String, dynamic>{'categoryId': categoryId});

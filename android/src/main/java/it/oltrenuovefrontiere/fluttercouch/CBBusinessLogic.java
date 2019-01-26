@@ -172,38 +172,68 @@ public class CBBusinessLogic {
         }
     }
 
-    public class CatgoryFilter implements Predicate<QueryRow> {
+    public class ByCategory implements Predicate<QueryRow> {
         private String uuid;
-        public CatgoryFilter(String categoryId) {
+        public ByCategory(String categoryId) {
             this.uuid = categoryId;
         }
         public boolean apply(QueryRow row) {
-            // Weird that this is the way you have to do it..
+            // Weird that this is the way you have to do it if key is array..
             LazyJsonArray<Object> keys = (LazyJsonArray<Object>)row.getKey();
             if (this.uuid.equals((String)keys.get(0))) { // categoryId
                 return true;
             } else {
-                // System.out.println("No match.");
-                // System.out.println(this.uuid);
-                // System.out.println((String)keys.get(0));
-                // System.out.println((String)keys.get(1));
                 return false;
             }
         }
     }
-    // Predicate<QueryRow> postFilterAll = new Predicate<QueryRow>(){
-    //         public boolean apply(QueryRow type){
-    //             return true;
-    //         }
-    //     };
 
     private ArrayList<Map<String, Object>> getLabels(String categoryId) {
         ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         if (mCbManager != null) { // needed?
             Database db = mCbManager.getDatabase();
             Query query = db.getView("labels").createQuery();
-            query.setPostFilter(new CatgoryFilter(categoryId));
+            query.setPostFilter(new ByCategory(categoryId));
             // query.setDescending(false);
+            try {
+                QueryEnumerator result = query.run();
+                for (Iterator<QueryRow> it = result; it.hasNext(); ) {
+                    QueryRow row = it.next();
+                    results.add(row.getDocument().getProperties());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return results;
+    }
+
+    private Boolean initPapersView() {
+        if (mCbManager != null) { // needed?
+            Database db = mCbManager.getDatabase();
+            View view = db.getView("papers");
+            view.setMap(new Mapper() {
+                @Override
+                public void map(Map<String, Object> document, Emitter emitter) {
+                    if (document.get("doc").equals("pap")) { // is paper
+                        List<Object> key = new ArrayList<Object>();
+                        key.add(document.get("when"));
+                        emitter.emit(key, null);
+                    }
+                }
+            }, "2");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private ArrayList<Map<String, Object>> getPapers() {
+        ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
+        if (mCbManager != null) { // needed?
+            Database db = mCbManager.getDatabase();
+            Query query = db.getView("papers").createQuery();
+            query.setDescending(true); // newest at top
             try {
                 QueryEnumerator result = query.run();
                 for (Iterator<QueryRow> it = result; it.hasNext(); ) {
@@ -231,6 +261,9 @@ public class CBBusinessLogic {
                     case ("labels"):
                         result.success(initLabelsView());
                         break;
+                    case ("papers"):
+                        result.success(initPapersView());
+                        break;
                     default:
                         result.success(false);    
                 }
@@ -244,6 +277,9 @@ public class CBBusinessLogic {
             case ("getLabels"):
                 String categoryId = call.argument("categoryId");
                 result.success(getLabels(categoryId));
+                break;
+            case ("getPapers"):
+                result.success(getPapers());
                 break;
             default:
                 result.notImplemented();
