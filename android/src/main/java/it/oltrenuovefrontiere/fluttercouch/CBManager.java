@@ -84,7 +84,7 @@ public class CBManager {
         resultMap.put("_rev", (String)doc.getProperties().get("_rev"));
         return resultMap;
     }
-
+    // TODO: Are update and save equivalent?
     public Map<String, String> updateDocumentWithId(String _id, Map<String, Object> _map) throws CouchbaseLiteException {
         HashMap<String, String> resultMap = new HashMap<String, String>();
         Document doc = mDatabase.get(defaultDatabase).getDocument(_id);
