@@ -69,60 +69,21 @@ abstract class Fluttercouch {
     return result;
   }
 
-  Future<String> setReplicatorEndpoint(String _endpoint) async {
+  Future<Null> createReplicatorWithName(String _name) async {
+    try {
+      await _methodChannel.invokeMethod('createReplicatorWithName', _name);
+    } on PlatformException {
+      throw 'unable to create replicator';
+    }
+  }
+
+  Future<String> configureReplicator(Map<String, String> _config) async {
     try {
       final String result =
-          await _methodChannel.invokeMethod('setReplicatorEndpoint', _endpoint);
+          await _methodChannel.invokeMethod('configureReplicator', _config);
       return result;
     } on PlatformException {
-      throw 'unable to set target endpoint to $_endpoint';
-    }
-  }
-
-  Future<String> setReplicatorType(String _type) async {
-    try {
-      final String result =
-          await _methodChannel.invokeMethod('setReplicatorType', _type);
-      return result;
-    } on PlatformException {
-      throw 'unable to set replicator type to $_type';
-    }
-  }
-
-  Future<bool> setReplicatorContinuous(bool _continuous) async {
-    try {
-      final bool result = await _methodChannel.invokeMethod('setReplicatorContinuous', _continuous);
-      return result;
-    } on PlatformException {
-      throw 'unable to set replicator continuous setting to $_continuous';
-    }
-  }
-
-  Future<String> setReplicatorBasicAuthentication(
-      Map<String, String> _auth) async {
-    try {
-      final String result = await _methodChannel.invokeMethod(
-          'setReplicatorBasicAuthentication', _auth);
-      return result;
-    } on PlatformException {
-      throw 'unable to set replicator basic authentication';
-    }
-  }
-
-  Future<String> setReplicatorSessionAuthentication(String _sessionID) async {
-    try {
-      final String result = await _methodChannel.invokeMethod('setReplicatorSessionAuthentication', _sessionID);
-      return result;
-    } on PlatformException {
-      throw 'unable to set replicator basic authentication';
-    }
-  }
-
-  Future<Null> initReplicator() async {
-    try {
-      await _methodChannel.invokeMethod("initReplicator");
-    } on PlatformException {
-      throw 'unable to init replicator';
+      throw 'unable to initialize replicator with config ${_config.toString()}';
     }
   }
 

@@ -1,26 +1,16 @@
 package it.oltrenuovefrontiere.fluttercouch;
 
-//import com.couchbase.lite.BasicAuthenticator;
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Manager;
-import com.couchbase.lite.android.AndroidContext;
 import com.couchbase.lite.Database;
-//import com.couchbase.lite.DatabaseConfiguration;
 import com.couchbase.lite.Document;
-//import com.couchbase.lite.Endpoint;
-//import com.couchbase.lite.LogDomain;
-//import com.couchbase.lite.LogLevel;
+import com.couchbase.lite.replicator.Replication;
+import com.couchbase.lite.auth.Authenticator;
+import com.couchbase.lite.auth.BasicAuthenticator;
+import com.couchbase.lite.android.AndroidContext;
 import com.couchbase.lite.util.Log;
-//import com.couchbase.lite.MutableDocument;
 
-//import com.couchbase.lite.Replicator;
-//import com.couchbase.lite.ReplicatorConfiguration;
-//
-//import com.couchbase.lite.SessionAuthenticator;
-//import com.couchbase.lite.URLEndpoint;
-//import com.couchbase.litecore.C4Replicator;
-
-
+import java.net.URL;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -30,14 +20,76 @@ import java.util.Map;
 
 // TODO: Bring back replicator functionality for cb 1.4.4
 
+
+class ReplicatorConfiguration {
+    URL url;
+    String synctype; // PUSH, PULL, PUSH_AND_PULL
+    Boolean continuous;
+    Authenticator auth;
+    Database database;
+    public ReplicatorConfiguration( URL url, 
+                                    String type, 
+                                    Boolean continuous, 
+                                    Authenticator auth,
+                                    Database database) {
+        this.url = url;
+        this.synctype = type;
+        this.continuous = continuous;
+        this.auth = auth;
+        this.database = database;
+    }
+}
+
+class Replicator {
+    private ReplicatorConfiguration mConfig = null;
+    private Replication mPush = null;
+    private Replication mPull = null;
+    public Boolean isConfigured() {
+        return !(mConfig == null);
+    }
+    // call default constructor, then init().
+    // TODO: enable authenticators or use the token header thing
+    void init(ReplicatorConfiguration config) {
+        mConfig = config;
+        switch(mConfig.synctype) {
+            case "PUSH":
+                mPush = mConfig.database.createPushReplication(mConfig.url);
+                // mPush.setAuthenticator(mConfig.auth);
+            break;
+            case "PULL":
+                mPull = mConfig.database.createPullReplication(mConfig.url);
+                // mPull.setAuthenticator(mConfig.auth);
+            break;
+            case "PUSH_AND_PULL":
+                mPush = mConfig.database.createPushReplication(mConfig.url);
+                // mPush.setAuthenticator(mConfig.auth);
+                mPull = mConfig.database.createPullReplication(mConfig.url);
+                // mPull.setAuthenticator(mConfig.auth);
+            break;
+        }
+        if (mPush != null) mPush.setContinuous(mConfig.continuous);
+        if (mPull != null) mPull.setContinuous(mConfig.continuous);
+    }
+
+    void start() {
+        if (mPush != null) mPush.start();
+        if (mPull != null) mPull.start();
+    }
+
+    void stop() {
+        if (mPush != null) mPush.stop();
+        if (mPull != null) mPull.stop();
+    }
+}
+
 public class CBManager {
     private static AndroidContext _context = null;
     private Manager _manager = null;
     
     private static CBManager mInstance = null;
     private HashMap<String, Database> mDatabase = new HashMap<>();
-//    private ReplicatorConfiguration mReplConfig;
-//    private Replicator mReplicator;
+    private HashMap<String, Replicator> mReplicator = new HashMap<>();
+
     private String defaultDatabase = "defaultdatabase";
 
     private CBManager(AndroidContext context) {
@@ -67,7 +119,7 @@ public class CBManager {
         return null;
     }
 
-     public Map<String, String> saveDocument(Map<String, Object> _map) throws CouchbaseLiteException {
+    public Map<String, String> saveDocument(Map<String, Object> _map) throws CouchbaseLiteException {
         HashMap<String, String> resultMap = new HashMap<String, String>();
         Document doc = mDatabase.get(defaultDatabase).createDocument();
         doc.putProperties(_map);
@@ -130,12 +182,6 @@ public class CBManager {
     }
     
     public void initDatabaseWithName(String _name) throws CouchbaseLiteException {
-    //    DatabaseConfiguration config = new DatabaseConfiguration(FluttercouchPlugin.context);
-    //    if (!mDatabase.containsKey(_name)) {
-    //        defaultDatabase = _name;
-    //        // Database.setLogLevel(LogDomain.REPLICATOR, LogLevel.VERBOSE);
-    //        mDatabase.put(_name, new Database(_name, config));
-    //    }
        if (!mDatabase.containsKey(_name)) {
            defaultDatabase = _name;
            Database db = _manager.getDatabase(_name);
@@ -143,62 +189,47 @@ public class CBManager {
        }
    }
 
-//    public String setReplicatorEndpoint(String _endpoint) throws URISyntaxException {
-//        Endpoint targetEndpoint = new URLEndpoint(new URI(_endpoint));
-//        mReplConfig = new ReplicatorConfiguration(mDatabase.get(defaultDatabase), targetEndpoint);
-//        return mReplConfig.getTarget().toString();
-//    }
+    public void createReplicatorWithName(String _name) throws CouchbaseLiteException {
+       if (!mReplicator.containsKey(_name)) {
+           mReplicator.put(_name, new Replicator());
+        // if it's there, stop it and delete it first?
+       }
+    }
 
-//    public String setReplicatorType(String _type) throws CouchbaseLiteException {
-//        ReplicatorConfiguration.ReplicatorType settedType = ReplicatorConfiguration.ReplicatorType.PULL;
-//        if (_type.equals("PUSH")) {
-//            settedType = ReplicatorConfiguration.ReplicatorType.PUSH;
-//        } else if (_type.equals("PULL")) {
-//            settedType = ReplicatorConfiguration.ReplicatorType.PULL;
-//        } else if (_type.equals("PUSH_AND_PULL")) {
-//            settedType = ReplicatorConfiguration.ReplicatorType.PUSH_AND_PULL;
-//        }
-//        mReplConfig.setReplicatorType(settedType);
-//        return settedType.toString();
-//    }
-//
-//    public String setReplicatorBasicAuthentication(Map<String, String> _auth) throws Exception {
-//        if (_auth.containsKey("username") && _auth.containsKey("password")) {
-//            mReplConfig.setAuthenticator(new BasicAuthenticator(_auth.get("username"), _auth.get("password")));
-//        } else {
-//            throw new Exception();
-//        }
-//        return mReplConfig.getAuthenticator().toString();
-//    }
-//
-//    public String setReplicatorSessionAuthentication(String sessionID) throws Exception {
-//        if (sessionID != null) {
-//            mReplConfig.setAuthenticator(new SessionAuthenticator(sessionID));
-//        } else {
-//            throw new Exception();
-//        }
-//        return mReplConfig.getAuthenticator().toString();
-//    }
-//
-//    public boolean setReplicatorContinuous(boolean _continuous) {
-//        mReplConfig.setContinuous(_continuous);
-//        return mReplConfig.isContinuous();
-//    }
-//
-//    public void initReplicator() {
-//        mReplicator = new Replicator(mReplConfig);
-//    }
-//
-//    public void startReplicator() {
-//        mReplicator.start();
-//    }
-//
-//    public void stopReplicator() {
-//        mReplicator.stop();
-//        mReplicator = null;
-//    }
-//
-//    public Replicator getReplicator() {
-//        return mReplicator;
-//    }
+    public String configureReplicator(Map<String, String> _config) throws Exception {
+        if (_config.containsKey("username") 
+                && _config.containsKey("password")
+                && _config.containsKey("url")
+                && _config.containsKey("synctype")
+                && _config.containsKey("continuous")) {
+            
+            BasicAuthenticator auth = new BasicAuthenticator(_config.get("username"), _config.get("password"));
+            ReplicatorConfiguration repConfig = new ReplicatorConfiguration(
+                new URL(_config.get("url")),
+                _config.get("synctype"),
+                _config.get("continuous") == "true" ? true : false,
+                auth,
+                mDatabase.get(defaultDatabase));
+
+            Replicator replicator = mReplicator.get(defaultDatabase);
+            replicator.init(repConfig);
+       } else {
+           throw new Exception();
+       }
+       return "what should this return?";
+   }
+
+   public void startReplicator() {
+      Replicator replicator = mReplicator.get(defaultDatabase);
+       replicator.start();
+   }
+
+   public void stopReplicator() {
+       Replicator replicator = mReplicator.get(defaultDatabase);
+        replicator.stop();
+   }
+
+   public Replicator getReplicator() {
+        return mReplicator.get(defaultDatabase);
+   }
 }

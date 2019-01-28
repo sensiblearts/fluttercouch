@@ -126,78 +126,48 @@ public class FluttercouchPlugin implements MethodCallHandler {
                     result.error("errDel", "error deleting the document with id: " + _id, e.toString());
                 }
                 break;
-            // case ("setReplicatorEndpoint"):
-            //     String _endpoint = call.arguments();
-            //     try {
-            //         String _result = mCbManager.setReplicatorEndpoint(_endpoint);
-            //         result.success(_result);
-            //     } catch (URISyntaxException e) {
-            //         e.printStackTrace();
-            //         result.error("errURI", "error setting the replicator endpoint uri to " + _endpoint, e.toString());
-            //     }
-            //     break;
-            // case ("setReplicatorType"):
-            //     String _type = call.arguments();
-            //     try {
-            //         result.success(mCbManager.setReplicatorType(_type));
-            //     } catch (CouchbaseLiteException e) {
-            //         e.printStackTrace();
-            //         result.error("errReplType", "error setting replication type to " + _type, e.toString());
-            //     }
-            //     break;
-            // case ("setReplicatorBasicAuthentication"):
-            //     Map<String, String> _auth = call.arguments();
-            //     try {
-            //         result.success(mCbManager.setReplicatorBasicAuthentication(_auth));
-            //     } catch (Exception e) {
-            //         e.printStackTrace();
-            //         result.error("errAuth", "error setting authentication for replicator", null);
-            //     }
-            //     break;
-            // case ("setReplicatorSessionAuthentication"):
-            //     String _sessionID = call.arguments();
-            //     try {
-            //         result.success(mCbManager.setReplicatorSessionAuthentication(_sessionID));
-            //     } catch (Exception e) {
-            //         e.printStackTrace();;
-            //         result.error("errAuth", "invalid session ID", null);
-            //     }
-            //     break;
-            // case ("setReplicatorContinuous"):
-            //     Boolean _continuous = call.arguments();
-            //     try {
-            //         result.success(mCbManager.setReplicatorContinuous(_continuous));
-            //     } catch (Exception e) {
-            //         e.printStackTrace();
-            //         result.error("errContinuous", "unable to set replication to continuous", null);
-            //     }
-            //     break;
-            // case ("initReplicator"):
-            //     mCbManager.initReplicator();
-            //     result.success("");
-            //     break;
-            // case ("startReplicator"):
-            //     mCbManager.startReplicator();
-            //     result.success("");
-            //     break;
-            // case ("stopReplicator"):
-            //     mCbManager.stopReplicator();
-            //     result.success("");
-            //     break;
-            // case ("executeQuery"):
-            //     HashMap<String, String> _queryMap = call.arguments();
-            //     Query query = QueryManager.buildFromMap(_queryMap, mCbManager);
-            //     try {
-            //         result.success(query.explain());
-            //     } catch (CouchbaseLiteException e) {
-            //         e.printStackTrace();
-            //         result.error("errExecutingQuery", "error executing query ", e.toString());
-            //     }
-            //     break;
-            // case ("execute"):
-            //     JSONObject queryJson = call.arguments();
-            //     Query queryFromJson = new QueryJson(queryJson).toCouchbaseQuery();
-            //     break;
+            case ("createReplicatorWithName"):
+                String _repname = call.arguments();
+                try {
+                    mCbManager.createReplicatorWithName(_repname);
+                    result.success("");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    result.error("errReplcreate", "error creating configuring replicator", null);
+                }
+                break;
+//         if (_config.containsKey("username") 
+//                 && _config.containsKey("password")
+//                 && _config.containsKey("url")
+//                 && _config.containsKey("synctype")
+//                 && _config.containsKey("continuous")) {
+            case ("configureReplicator"):
+                Map<String, String> _config = call.arguments();
+                try {
+                    result.success(mCbManager.configureReplicator(_config));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    result.error("errReplconfig", "error configuring replicator", null);
+                }
+                break;
+            case ("startReplicator"):
+                try {
+                    mCbManager.startReplicator();
+                    result.success("");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    result.error("errReplstart", "error starting replicator", null);
+                }
+                break;
+            case ("stopReplicator"):
+                try {
+                    mCbManager.stopReplicator();
+                    result.success("");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    result.error("errReplstop", "error stopping replicator", null);
+                }
+                break;
             default:
                 mCbBusinessLogic.handleCall(call, result);
             }
