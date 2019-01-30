@@ -15,6 +15,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 // SEE: https://docs.couchbase.com/couchbase-lite/1.4/java.html#manager
 
@@ -35,7 +37,7 @@ class ReplicatorConfiguration {
         this.url = url;
         this.synctype = type;
         this.continuous = continuous;
-        this.auth = auth;
+        this.auth = auth; // auth is null
         this.database = database;
     }
 }
@@ -67,8 +69,22 @@ class Replicator {
                 // mPull.setAuthenticator(mConfig.auth);
             break;
         }
-        if (mPush != null) mPush.setContinuous(mConfig.continuous);
-        if (mPull != null) mPull.setContinuous(mConfig.continuous);
+        if (mPush != null) {
+            mPush.setContinuous(mConfig.continuous);
+            Map<String, Object> httpHeaders = mPush.getHeaders();
+            httpHeaders.put("X-Auth-CouchDB-UserName","ceac7a71-f125-4816-963c-af6a5d027211");
+            httpHeaders.put("X-Auth-CouchDB-Token","edc54bb202586b3bfe5fe525c46af27611d404c9");
+            httpHeaders.put("Content-Type","application/json; charset=utf-8");
+            mPush.setHeaders(httpHeaders);
+        }
+        if (mPull != null) {
+            mPull.setContinuous(mConfig.continuous);
+            Map<String, Object> httpHeaders = mPull.getHeaders();
+            httpHeaders.put("X-Auth-CouchDB-UserName","ceac7a71-f125-4816-963c-af6a5d027211");
+            httpHeaders.put("X-Auth-CouchDB-Token","edc54bb202586b3bfe5fe525c46af27611d404c9");
+            httpHeaders.put("Content-Type","application/json; charset=utf-8");
+            mPull.setHeaders(httpHeaders);
+        }
     }
 
     void start() {
@@ -197,13 +213,14 @@ public class CBManager {
     }
 
     public String configureReplicator(Map<String, String> _config) throws Exception {
-        if (_config.containsKey("username") 
-                && _config.containsKey("password")
-                && _config.containsKey("url")
+        if (    //_config.containsKey("username") 
+                //&& _config.containsKey("password")
+                //&& 
+                _config.containsKey("url")
                 && _config.containsKey("synctype")
                 && _config.containsKey("continuous")) {
             
-            BasicAuthenticator auth = new BasicAuthenticator(_config.get("username"), _config.get("password"));
+            BasicAuthenticator auth = null; // new BasicAuthenticator(_config.get("username"), _config.get("password"));
             ReplicatorConfiguration repConfig = new ReplicatorConfiguration(
                 new URL(_config.get("url")),
                 _config.get("synctype"),
