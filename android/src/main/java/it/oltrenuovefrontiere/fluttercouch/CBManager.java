@@ -24,16 +24,22 @@ import java.util.ArrayList;
 
 
 class ReplicatorConfiguration {
+    String token;
+    String username;
     URL url;
     String synctype; // PUSH, PULL, PUSH_AND_PULL
     Boolean continuous;
     Authenticator auth;
     Database database;
-    public ReplicatorConfiguration( URL url, 
+    public ReplicatorConfiguration( String token,
+                                    String username,
+                                    URL url, 
                                     String type, 
                                     Boolean continuous, 
                                     Authenticator auth,
                                     Database database) {
+        this.token = token;
+        this.username = username;
         this.url = url;
         this.synctype = type;
         this.continuous = continuous;
@@ -69,24 +75,30 @@ class Replicator {
                 // mPull.setAuthenticator(mConfig.auth);
             break;
         }
+        // These headers are for the couchdb "database per user" approach,
+        // where user nameand token are passed in headers.
+        System.out.println("USERNAME");
+        System.out.println(mConfig.username);
+        System.out.println("token");
+        System.out.println(mConfig.token);
+        
         if (mPush != null) {
             mPush.setContinuous(mConfig.continuous);
-            Map<String, Object> httpHeaders = mPush.getHeaders();
-            httpHeaders.put("X-Auth-CouchDB-UserName","ceac7a71-f125-4816-963c-af6a5d027211");
-            httpHeaders.put("X-Auth-CouchDB-Token","edc54bb202586b3bfe5fe525c46af27611d404c9");
-            httpHeaders.put("Content-Type","application/json; charset=utf-8");
-            mPush.setHeaders(httpHeaders);
+            Map<String, Object> pushHeaders = mPush.getHeaders();
+            pushHeaders.put("X-Auth-CouchDB-UserName", mConfig.username);
+            pushHeaders.put("X-Auth-CouchDB-Token",mConfig.token);
+            pushHeaders.put("Content-Type","application/json; charset=utf-8");
+            mPush.setHeaders(pushHeaders);
         }
         if (mPull != null) {
             mPull.setContinuous(mConfig.continuous);
-            Map<String, Object> httpHeaders = mPull.getHeaders();
-            httpHeaders.put("X-Auth-CouchDB-UserName","ceac7a71-f125-4816-963c-af6a5d027211");
-            httpHeaders.put("X-Auth-CouchDB-Token","edc54bb202586b3bfe5fe525c46af27611d404c9");
-            httpHeaders.put("Content-Type","application/json; charset=utf-8");
-            mPull.setHeaders(httpHeaders);
+            Map<String, Object> pullHeaders = mPull.getHeaders();
+            pullHeaders.put("X-Auth-CouchDB-UserName", mConfig.username);
+            pullHeaders.put("X-Auth-CouchDB-Token",mConfig.token);
+            pullHeaders.put("Content-Type","application/json; charset=utf-8");
+            mPull.setHeaders(pullHeaders);
         }
     }
-
     void start() {
         if (mPush != null) mPush.start();
         if (mPull != null) mPull.start();
@@ -213,24 +225,23 @@ public class CBManager {
     }
 
     public String configureReplicator(Map<String, String> _config) throws Exception {
-        if (    //_config.containsKey("username") 
-                //&& _config.containsKey("password")
-                //&& 
-                _config.containsKey("url")
+        if (    _config.containsKey("token") // for header, couch-per-user approach
+                && _config.containsKey("username")
+                && _config.containsKey("url")
                 && _config.containsKey("synctype")
                 && _config.containsKey("continuous")) {
-            
-            BasicAuthenticator auth = null; // new BasicAuthenticator(_config.get("username"), _config.get("password"));
             ReplicatorConfiguration repConfig = new ReplicatorConfiguration(
+                _config.get("token"),
+                _config.get("username"),
                 new URL(_config.get("url")),
                 _config.get("synctype"),
                 _config.get("continuous") == "true" ? true : false,
-                auth,
+                (Authenticator)null, // Need to look into couchbase 1.4 code to see if they have an authenticator that sets header tokens
                 mDatabase.get(defaultDatabase));
-
             Replicator replicator = mReplicator.get(defaultDatabase);
             replicator.init(repConfig);
        } else {
+           // else if you want to implement BasicAuthenticator logic, do it here
            throw new Exception();
        }
        return "what should this return?";
