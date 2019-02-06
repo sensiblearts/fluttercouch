@@ -83,6 +83,35 @@ public class CBBusinessLogic {
 
     // App-specific CB-lite 1.4.4 Query on View for "entries"
     //
+    // TODO: change signature for PAGINATION
+    // SEE: https://blog.couchbase.com/pagination-couchbase/
+    //
+    // See also: https://blog.couchbase.com/startkeydocid-behaviour/
+    // which explains:
+    // Here is a quick list of the important things to remember about startkey_docid:
+    // startkey_docid will be entirely ignored if startkey is ommitted.
+    // startkey_docid will only function correctly if you specify a startkey which exactly matches documents which are indexed in the view.
+    // startkey_docid is expected to exactly match one of the docid's in the results which exactly match your startkey. If no match is made, the results will begin at the following key.
+    //
+    // TODO: limit=rowPerPage, skip=skip, startkey=currentStartkey, startkey_docid=startDocId
+    // e.g., getEntries(int rowPerPage, String startkey, String startkeyDocID)
+    // ACTUALLY, I think I can just use startKey, because it is a timestamp plus label
+    // e.g., getEntries(int rowPerPage, Object startkey)
+    // And the client would have to know to pass a key of List<Object>([when,labelId])...?
+    // BETTER YET:
+    //
+    // e.g., getEntries(int rowPerPage, Datetime when, String labelId)...
+    //
+    // and let getEntries build the startKey as 
+    //   List<Object> startKey = new ArrayList<Object>();
+    //                     startKey.add(document.get("when"));
+    // If labelId is NULL, then we assume it's "All Entries and pass in just the "when"; otherwise:
+    //                     startKey.add(document.get("labelId"));
+    // Also, if "when" is null, then we assume it is the first call and Skip = 0
+    // Else Skip = 1;
+    // Also, if labelId is not null, we have to build a Predicate<QueryRow>, e.g., ByLabel. (see by Category)
+    // I assume Skip will happen AFTER predicate is applied?
+
     private ArrayList<Map<String, Object>> getEntries() {
         ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         if (mCbManager != null) { // needed?

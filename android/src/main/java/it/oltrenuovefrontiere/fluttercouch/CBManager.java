@@ -20,9 +20,6 @@ import java.util.ArrayList;
 
 // SEE: https://docs.couchbase.com/couchbase-lite/1.4/java.html#manager
 
-// TODO: Bring back replicator functionality for cb 1.4.4
-
-
 class ReplicatorConfiguration {
     String token;
     String username;
