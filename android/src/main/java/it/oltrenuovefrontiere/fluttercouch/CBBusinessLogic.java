@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Date;
 
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.JSONMethodCodec;
@@ -69,12 +70,12 @@ public class CBBusinessLogic {
                 public void map(Map<String, Object> document, Emitter emitter) {
                     if (document.get("doc").equals("ent")) { // is entry
                         List<Object> key = new ArrayList<Object>();
-                        key.add(document.get("when"));
-                        key.add(document.get("labelId"));
+                        key.add(document.get("when")); // keys.get(0)
+                        key.add(document.get("labelId")); // keys.get(1)
                         emitter.emit(key, null);
                     }
                 }
-            }, "2");
+            }, "3");
             return true;
         } else {
             return false;
@@ -112,21 +113,55 @@ public class CBBusinessLogic {
     // Also, if labelId is not null, we have to build a Predicate<QueryRow>, e.g., ByLabel. (see by Category)
     // I assume Skip will happen AFTER predicate is applied?
 
-    private ArrayList<Map<String, Object>> getEntries() {
+    public class ByLabel implements Predicate<QueryRow> {
+        private String uuid;
+        public ByLabel(String labelId) {
+            this.uuid = labelId;
+        }
+        public boolean apply(QueryRow row) {
+            // Weird that this is the way you have to do it if key is array..
+            LazyJsonArray<Object> keys = (LazyJsonArray<Object>)row.getKey();
+            if (this.uuid.equals((String)keys.get(1))) { // labelId
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    private ArrayList<Map<String, Object>> getEntriesForLabel(int rowsPerPage, String startDate, String labelId) {
         ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         if (mCbManager != null) { // needed?
             Database db = mCbManager.getDatabase();
             Query query = db.getView("entries").createQuery();
             query.setDescending(true);
-            // query.set...:
-            // startKey: the key to start at. The default value, null, means to start from the beginning.
-            // endKey: the last key to return. The default value, null, means to continue to the end.
-            // descending: If set to true, the keys will be returned in reverse order. (This also reverses the meanings of the startKey and endKey properties, since the query will now start at the highest keys and end at lower ones!)
-            // limit: If nonzero, this is the maximum number of rows that will be returned.
-            // skip: If nonzero, this many rows will be skipped (starting from the startKey if any.)
+            List<Object> startKey = new ArrayList<Object>();
+            if (startDate != null) {
+                startKey.add(startDate);
+            }
+            if (labelId != null) {
+                startKey.add(labelId);
+                query.setPostFilter(new ByLabel(labelId));
+            }
+            if (startDate != null) {
+                query.setStartKey(startKey);
+            }
+            query.setLimit(rowsPerPage);
+            System.out.println("CB rowsPerPager " + rowsPerPage);
+            System.out.println("CB startDate " + startDate);
+            System.out.println("CB labelId " + labelId);
+            System.out.println("CB startkey " + startKey);
+            if (startDate == null) { 
+                query.setSkip(0); // first page
+            } else {
+                query.setSkip(1); // other pages
+            }
             try {
                 QueryEnumerator result = query.run();
+                System.out.println("in qery, result: " + result.toString());
+            
                 for (Iterator<QueryRow> it = result; it.hasNext(); ) {
+                    System.out.print("query row");
                     QueryRow row = it.next();
                     // if (row.getConflictingRevisions().size() > 0) {
                     //     Log.w("MYAPP", "Conflict in document: %s", row.getDocumentId());
@@ -297,8 +332,11 @@ public class CBBusinessLogic {
                         result.success(false);    
                 }
                 break;
-            case ("getEntries"):
-                result.success(getEntries());
+            case ("getEntriesForLabel"):
+                int rowsPerPage = call.argument("rowsPerPage");
+                String startDate = call.argument("startDate");
+                String labelId = call.argument("labelId");
+                result.success(getEntriesForLabel(rowsPerPage, startDate, labelId));
                 break;
             case ("getCategories"):
                 result.success(getCategories());
