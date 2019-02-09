@@ -136,32 +136,30 @@ public class CBBusinessLogic {
             Query query = db.getView("entries").createQuery();
             query.setDescending(true);
             List<Object> startKey = new ArrayList<Object>();
-            if (startDate != null) {
-                startKey.add(startDate);
-            }
             if (labelId != null) {
                 startKey.add(labelId);
                 query.setPostFilter(new ByLabel(labelId));
             }
-            if (startDate != null) {
-                query.setStartKey(startKey);
-            }
+            if (startDate != null) { 
+                startKey.add(startDate);
+                query.setStartKey(startKey); // first doc must be 1 *after* this one
+                // query.setSkip(1); // other pages
+                // query.setLimit(rowsPerPage);
+                // So, it seems the setSkip(1) may only be needed
+                // if you're using startKeyDocId approach.
+                // Whereas, if you're using startKey, then
+                // we can ignore skip.
+            } 
+            // default skip == 0
             query.setLimit(rowsPerPage);
-            System.out.println("CB rowsPerPager " + rowsPerPage);
-            System.out.println("CB startDate " + startDate);
-            System.out.println("CB labelId " + labelId);
-            System.out.println("CB startkey " + startKey);
-            if (startDate == null) { 
-                query.setSkip(0); // first page
-            } else {
-                query.setSkip(1); // other pages
-            }
+            // System.out.println("CB rowsPerPager " + rowsPerPage);
+            // System.out.println("CB startDate " + startDate);
+            // System.out.println("CB labelId " + labelId);
+            // System.out.println("CB startkey " + startKey);
             try {
                 QueryEnumerator result = query.run();
                 System.out.println("in qery, result: " + result.toString());
-            
                 for (Iterator<QueryRow> it = result; it.hasNext(); ) {
-                    System.out.print("query row");
                     QueryRow row = it.next();
                     // if (row.getConflictingRevisions().size() > 0) {
                     //     Log.w("MYAPP", "Conflict in document: %s", row.getDocumentId());
@@ -176,6 +174,8 @@ public class CBBusinessLogic {
         return results;
     }
 
+    // TODO: Perhaps, should index cat docs on "when", "title"
+    // so that newest years are at the top. (vs leave alphabetically as it is?)
     private Boolean initCategoriesView() {
         if (mCbManager != null) { // needed?
             Database db = mCbManager.getDatabase();
