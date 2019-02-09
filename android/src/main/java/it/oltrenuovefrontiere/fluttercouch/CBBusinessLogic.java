@@ -136,20 +136,19 @@ public class CBBusinessLogic {
             Query query = db.getView("entries").createQuery();
             query.setDescending(true);
             List<Object> startKey = new ArrayList<Object>();
+            if (startDate != null) {
+                startKey.add(startDate);
+            } else {
+                startKey.add(null); // so key array index is correct
+            }
             if (labelId != null) {
                 startKey.add(labelId);
                 query.setPostFilter(new ByLabel(labelId));
             }
-            if (startDate != null) { 
-                startKey.add(startDate);
-                query.setStartKey(startKey); // first doc must be 1 *after* this one
-                // query.setSkip(1); // other pages
-                // query.setLimit(rowsPerPage);
-                // So, it seems the setSkip(1) may only be needed
-                // if you're using startKeyDocId approach.
-                // Whereas, if you're using startKey, then
-                // we can ignore skip.
-            } 
+            if (startDate != null) {
+                query.setStartKey(startKey);
+            }
+            // query.setStartKey(startKey); // first doc must be 1 *after* this one
             // default skip == 0
             query.setLimit(rowsPerPage);
             // System.out.println("CB rowsPerPager " + rowsPerPage);
