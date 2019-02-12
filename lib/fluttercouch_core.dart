@@ -127,57 +127,22 @@ abstract class FluttercouchCore {
     }
   }
 
+  // returns {"_id": _id, "_rev": _rev, "attacName": attachName}
+  Future<Map<dynamic, dynamic>> upsertNamedAttachmentAsFilepath(String _id,  Map<String, String> _map) async {
+    final Map<dynamic, dynamic> upserted = await methodChannel.invokeMethod(
+        'upsertNamedAttachmentAsFilepath', <String, dynamic>{'id': _id, 'map': _map});
+    return upserted;
+  }
+
+  // returns {"_id": _id, "stream": inputStream}
+  Future<Map<dynamic, dynamic>> getNamedAttachment(String _id, String _name) async {
+    final Map<dynamic, dynamic> attachment = await methodChannel.invokeMethod(
+        'getNamedAttachment', <String, dynamic>{'id': _id, 'name': _name});
+    return attachment;
+  }
+
   void listenReplicationEvents(Function(dynamic) function) {
     _replicationEventChannel.receiveBroadcastStream().listen(function);
   }
-
-  ///////////////////////////////////////////////////////////////////////
-  ///
-  /// App-specific methods to customize this plugin
-  ///
-  //////////////////////////////////////////////////////////////////////
-
-  Future<List<dynamic>> getPaperJournals() async {
-    try {
-      final List<dynamic> result =
-          await methodChannel.invokeMethod('getPapers');
-      return result;
-    } on PlatformException {
-      throw 'unable to get all papers';
-    }
-  }
-
-  Future<List<dynamic>> getEntriesForLabel(int rowsPerPage, String startDate, String labelId) async {
-    try {
-      final List<dynamic> result = await methodChannel.invokeMethod(
-          'getEntriesForLabel', <String, dynamic>{
-        'rowsPerPage': rowsPerPage,
-        'startDate': startDate,
-        'labelId': labelId
-      });
-      return result;
-    } on PlatformException {
-      throw 'unable to get all entries';
-    }
-  }
-
-  Future<List<dynamic>> getCategories() async {
-    try {
-      final List<dynamic> result =
-          await methodChannel.invokeMethod('getCategories');
-      return result;
-    } on PlatformException {
-      throw 'unable to get all categories';
-    }
-  }
-
-  Future<List<dynamic>> getLabels(String categoryId) async {
-    try {
-      final List<dynamic> result = await methodChannel.invokeMethod(
-          'getLabels', <String, dynamic>{'categoryId': categoryId});
-      return result;
-    } on PlatformException {
-      throw 'unable to get labels for category: $categoryId';
-    }
-  }
+  
 }

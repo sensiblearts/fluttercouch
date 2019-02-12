@@ -104,9 +104,9 @@ public class FluttercouchPlugin implements MethodCallHandler {
                 break;
             case ("updateDocumentWithId"):
                 if (call.hasArgument("id") && call.hasArgument("map")) {
-                    _id = call.argument("id");
+                    try { _id = call.argument("id");
                     Map<String, Object> _map = call.argument("map");
-                    try {
+                   
                         Map<String,String> idAndRev = mCbManager.updateDocumentWithId(_id, _map);
                         result.success(idAndRev);
                     } catch (CouchbaseLiteException e) {
@@ -124,6 +124,36 @@ public class FluttercouchPlugin implements MethodCallHandler {
                 } catch (CouchbaseLiteException e) {
                     e.printStackTrace();
                     result.error("errDel", "error deleting the document with id: " + _id, e.toString());
+                }
+                break;
+            case("upsertNamedAttachmentAsFilepath"):
+                if (call.hasArgument("id") && call.hasArgument("map")) {
+                    _id = call.argument("id");
+                    Map<String, Object> _map = call.argument("map");
+                    try {
+                        Map<String,String> resultMap = mCbManager.upsertNamedAttachmentAsFilepath(_id, _map);
+                        result.success(resultMap);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        result.error("errSave", "error attaching file", e.toString());
+                    }
+                } else {
+                    result.error("errArg", "invalid arguments", null);
+                }
+                break;
+            case("getNamedAttachment"):
+                if (call.hasArgument("id") && call.hasArgument("name")) {
+                    _id = call.argument("id");
+                    _name = call.argument("name");
+                    try {
+                        Map<String,Object> resultMap = mCbManager.getNamedAttachment(_id, _name);
+                        result.success(resultMap);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        result.error("errSave", "error getting attachment", e.toString());
+                    }
+                } else {
+                    result.error("errArg", "invalid arguments", null);
                 }
                 break;
             case ("createReplicatorWithName"):

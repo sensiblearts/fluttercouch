@@ -4,6 +4,10 @@ import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Manager;
 import com.couchbase.lite.Database;
 import com.couchbase.lite.Document;
+import com.couchbase.lite.Revision;
+import com.couchbase.lite.UnsavedRevision;
+import com.couchbase.lite.SavedRevision;
+import com.couchbase.lite.Attachment;
 import com.couchbase.lite.replicator.Replication;
 import com.couchbase.lite.auth.Authenticator;
 import com.couchbase.lite.auth.BasicAuthenticator;
@@ -17,6 +21,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
+import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 // SEE: https://docs.couchbase.com/couchbase-lite/1.4/java.html#manager
 
@@ -205,7 +215,84 @@ public class CBManager {
         Document doc = mDatabase.get(defaultDatabase).getDocument(_id);
         return doc.delete();
     }
-    
+
+    public Map<String, String> upsertNamedAttachmentAsFilepath(String _id, Map<String, Object> _map) throws CouchbaseLiteException, Exception {
+        HashMap<String, String> resultMap = new HashMap<String, String>();
+        if (        _map.containsKey("mime") 
+                    && _map.containsKey("attachName")
+                    && _map.containsKey("filePath")) {
+            String mime = _map.get("mime").toString();
+            String attachName = _map.get("attachName").toString();
+            String filePath = _map.get("filePath").toString();
+            Document doc = mDatabase.get(defaultDatabase).getDocument(_id);
+            resultMap.put("_id", doc.getId());
+            resultMap.put("_rev", (String)doc.getProperties().get("_rev")); // before attach
+            resultMap.put("attachName", null);
+            UnsavedRevision newRev = doc.getCurrentRevision().createRevision();
+            try {
+                File file = new File(filePath);
+                InputStream stream = new FileInputStream(file);
+                newRev.setAttachment(attachName, mime, stream);
+                SavedRevision savedRev = newRev.save();
+                doc = savedRev.getDocument();
+                resultMap.put("_id", doc.getId());
+                resultMap.put("_rev", (String)doc.getProperties().get("_rev")); // after attach
+                resultMap.put("attachName", attachName);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            throw new Exception();
+        }      
+        return resultMap;
+    }
+
+    public static byte[] toByteArray(InputStream in) throws IOException {
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		byte[] buffer = new byte[1024];
+		int len;
+		while ((len = in.read(buffer)) != -1) {
+			os.write(buffer, 0, len);
+		}
+        Integer size = new Integer(len);
+        return os.toByteArray();
+	}
+
+    public Map<String, Object> getNamedAttachment(String _id, String _name) throws CouchbaseLiteException {
+        Database defaultDb = mDatabase.get(defaultDatabase);
+        HashMap<String, Object> resultMap = new HashMap<String, Object>();
+        if (defaultDb != null) {
+            Document doc = defaultDb.getDocument(_id);
+            if (doc != null) {
+                try {
+                    Revision rev = doc.getCurrentRevision();
+                    Attachment att = rev.getAttachment(_name); // e.g., "entry.jpg"
+                    if (att != null) {
+                        InputStream is = att.getContent();
+                        byte[] attBytes = toByteArray(is);
+                        resultMap.put("attachment",  attBytes);
+                    } else {
+                        resultMap.put("attachment", null);
+                    }
+                    // TODO
+                    // att.get mime to add to map
+                    resultMap.put("_id", _id);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                resultMap.put("_id", _id);
+                resultMap.put("attachment", null);
+            }
+           
+        }
+        return resultMap;
+    }
+
+    // public boolean removeNamedAttachment(String _id, String _name) throws CouchbaseLiteException {
+    //     return false;
+    // }
+
     public void initDatabaseWithName(String _name) throws CouchbaseLiteException {
        if (!mDatabase.containsKey(_name)) {
            defaultDatabase = _name;
