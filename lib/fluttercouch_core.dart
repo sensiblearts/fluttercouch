@@ -134,12 +134,12 @@ abstract class FluttercouchCore {
     return upserted;
   }
 
-  // returns {"_id": _id, "stream": inputStream}
-  Future<Map<dynamic, dynamic>> getNamedAttachment(String _id, String _name) async {
-    final Map<dynamic, dynamic> attachment = await methodChannel.invokeMethod(
-        'getNamedAttachment', <String, dynamic>{'id': _id, 'name': _name});
-    return attachment;
-  }
+  // // returns {"_id": _id, "stream": inputStream}
+  // Future<Map<dynamic, dynamic>> getNamedAttachment(String _id, String _name) async {
+  //   final Map<dynamic, dynamic> attachment = await methodChannel.invokeMethod(
+  //       'getNamedAttachment', <String, dynamic>{'id': _id, 'name': _name});
+  //   return attachment;
+  // }
 
   void listenReplicationEvents(Function(dynamic) function) {
     _replicationEventChannel.receiveBroadcastStream().listen(function);

@@ -233,8 +233,25 @@ public class CBManager {
                 File file = new File(filePath);
                 InputStream stream = new FileInputStream(file);
                 newRev.setAttachment(attachName, mime, stream);
-                SavedRevision savedRev = newRev.save();
-                doc = savedRev.getDocument();
+                
+                SavedRevision savedRev = newRev.save(); // save once
+
+                // TODO: I think this is uploading the attachment NOW,
+                // and then when I do putProperties below to add the blobURL,
+                // it overwrites properties and eliminates the attachments :-()
+
+                Attachment att = savedRev.getAttachment(attachName);
+                // once attachment is saved, we can get:
+                URL url = att.getContentURL(); // cb-lite file path to attachment
+                String urlStr = url.toString();
+                String androidPath = urlStr.substring(5, urlStr.length());
+                // and add that url to the doc:
+                doc = mDatabase.get(defaultDatabase).getDocument(_id); // get again
+                Map<String, Object> props = doc.getUserProperties(); // writeable
+                props.put("blobURL", androidPath);
+                props.put("_rev", (String)doc.getProperties().get("_rev"));
+                doc.putProperties(props); // save again
+                // System.out.println("Attach URL to string: " + url.toString());
                 resultMap.put("_id", doc.getId());
                 resultMap.put("_rev", (String)doc.getProperties().get("_rev")); // after attach
                 resultMap.put("attachName", attachName);
@@ -247,47 +264,50 @@ public class CBManager {
         return resultMap;
     }
 
-    public static byte[] toByteArray(InputStream in) throws IOException {
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		byte[] buffer = new byte[1024];
-		int len;
-		while ((len = in.read(buffer)) != -1) {
-			os.write(buffer, 0, len);
-		}
-        Integer size = new Integer(len);
-        return os.toByteArray();
-	}
+    // public static byte[] toByteArray(InputStream in) throws IOException {
+	// 	ByteArrayOutputStream os = new ByteArrayOutputStream();
+	// 	byte[] buffer = new byte[1024];
+	// 	int len;
+	// 	while ((len = in.read(buffer)) != -1) {
+	// 		os.write(buffer, 0, len);
+	// 	}
+    //     Integer size = new Integer(len);
+    //     return os.toByteArray();
+	// }
 
-    public Map<String, Object> getNamedAttachment(String _id, String _name) throws CouchbaseLiteException {
-        Database defaultDb = mDatabase.get(defaultDatabase);
-        HashMap<String, Object> resultMap = new HashMap<String, Object>();
-        if (defaultDb != null) {
-            Document doc = defaultDb.getDocument(_id);
-            if (doc != null) {
-                try {
-                    Revision rev = doc.getCurrentRevision();
-                    Attachment att = rev.getAttachment(_name); // e.g., "entry.jpg"
-                    if (att != null) {
-                        InputStream is = att.getContent();
-                        byte[] attBytes = toByteArray(is);
-                        resultMap.put("attachment",  attBytes);
-                    } else {
-                        resultMap.put("attachment", null);
-                    }
-                    // TODO
-                    // att.get mime to add to map
-                    resultMap.put("_id", _id);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                resultMap.put("_id", _id);
-                resultMap.put("attachment", null);
-            }
+    // public Map<String, Object> getNamedAttachment(String _id, String _name) throws CouchbaseLiteException {
+    //     Database defaultDb = mDatabase.get(defaultDatabase);
+    //     HashMap<String, Object> resultMap = new HashMap<String, Object>();
+    //     if (defaultDb != null) {
+    //         Document doc = defaultDb.getDocument(_id);
+    //         if (doc != null) {
+    //             try {
+    //                 Revision rev = doc.getCurrentRevision();
+    //                 Attachment att = rev.getAttachment(_name); // e.g., "entry.jpg"
+    //                 if (att != null) {
+    //                     InputStream is = att.getContent();
+    //                     byte[] attBytes = toByteArray(is);
+    //                     resultMap.put("attachment",  attBytes);
+    //                     Map<String,Object> attMap = (Map<String,Object>)doc.getProperties().get("_attachments");
+    //                     System.out.println("ATT MAP");
+    //                     System.out.println(attMap.toString());
+    //                 } else {
+    //                     resultMap.put("attachment", null);
+    //                 }
+    //                 // TODO
+    //                 // att.get mime to add to map
+    //                 resultMap.put("_id", _id);
+    //             } catch (Exception e) {
+    //                 e.printStackTrace();
+    //             }
+    //         } else {
+    //             resultMap.put("_id", _id);
+    //             resultMap.put("attachment", null);
+    //         }
            
-        }
-        return resultMap;
-    }
+    //     }
+    //     return resultMap;
+    // }
 
     // public boolean removeNamedAttachment(String _id, String _name) throws CouchbaseLiteException {
     //     return false;
