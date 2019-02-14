@@ -233,25 +233,11 @@ public class CBManager {
                 File file = new File(filePath);
                 InputStream stream = new FileInputStream(file);
                 newRev.setAttachment(attachName, mime, stream);
-                
                 SavedRevision savedRev = newRev.save(); // save once
-
-                // TODO: I think this is uploading the attachment NOW,
-                // and then when I do putProperties below to add the blobURL,
-                // it overwrites properties and eliminates the attachments :-()
-
-                Attachment att = savedRev.getAttachment(attachName);
-                // once attachment is saved, we can get:
-                URL url = att.getContentURL(); // cb-lite file path to attachment
-                String urlStr = url.toString();
-                String androidPath = urlStr.substring(5, urlStr.length());
-                // and add that url to the doc:
-                doc = mDatabase.get(defaultDatabase).getDocument(_id); // get again
-                Map<String, Object> props = doc.getUserProperties(); // writeable
-                props.put("blobURL", androidPath);
-                props.put("_rev", (String)doc.getProperties().get("_rev"));
-                doc.putProperties(props); // save again
-                // System.out.println("Attach URL to string: " + url.toString());
+                // After save() is called above, the file now has a physical location
+                // in a private couchbase-lite folder; which you can get by calling
+                // Attachment att = savedRev.getAttachment(attachName);
+                // URL url = att.getContentURL(); // cb-lite file path to attachment
                 resultMap.put("_id", doc.getId());
                 resultMap.put("_rev", (String)doc.getProperties().get("_rev")); // after attach
                 resultMap.put("attachName", attachName);

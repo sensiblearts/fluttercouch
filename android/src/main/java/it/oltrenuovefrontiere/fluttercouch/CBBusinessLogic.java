@@ -6,6 +6,11 @@ import android.util.Log;
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
 import com.couchbase.lite.View;
+import com.couchbase.lite.Document;
+import com.couchbase.lite.Revision;
+import com.couchbase.lite.UnsavedRevision;
+import com.couchbase.lite.SavedRevision;
+import com.couchbase.lite.Attachment;
 import com.couchbase.lite.Mapper;
 import com.couchbase.lite.Emitter;
 import com.couchbase.lite.Query;
@@ -18,6 +23,8 @@ import com.couchbase.lite.support.LazyJsonArray;
 
 import org.json.JSONObject;
 
+import java.net.URL;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
@@ -164,7 +171,26 @@ public class CBBusinessLogic {
                     //     Log.w("MYAPP", "Conflict in document: %s", row.getDocumentId());
                     //     beginConflictResolution(row.getDocument());
                     // }
-                    results.add(row.getDocument().getProperties());
+                    Document doc = row.getDocument();
+                    // Couchbase Lite may have changed the client side file and hashed filename
+                    // of any attachment, because it may habe sync'd with a doc that was modified
+                    // by another client; who e.g., replaced the same attachment name with a 
+                    // different file, which would result in a different hash and different filename. 
+                    // Therefore, we load the client-side location of the attachment, just-in-time:
+                    Revision rev = doc.getCurrentRevision();           
+                    Attachment att = rev.getAttachment("entry.jpg"); // TODO: Pass in
+                    if (att != null) {
+                        URL url = att.getContentURL(); // cb-lite file path to attachment
+                        String urlStr = url.toString();
+                        String androidPath = urlStr.substring(5, urlStr.length()); // "file:..."
+                        Map<String, Object> props = new HashMap<String, Object>();
+                        props.putAll(doc.getProperties());
+                        props.put("blobURL", androidPath); // just-in-time
+                        props.put("localImagePath", androidPath); // temp
+                        results.add(props);
+                    } else {
+                        results.add(doc.getProperties());
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
