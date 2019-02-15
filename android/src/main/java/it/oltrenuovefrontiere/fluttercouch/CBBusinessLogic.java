@@ -120,7 +120,7 @@ public class CBBusinessLogic {
     // Also, if labelId is not null, we have to build a Predicate<QueryRow>, e.g., ByLabel. (see by Category)
     // I assume Skip will happen AFTER predicate is applied?
 
-    public class ByLabel implements Predicate<QueryRow> {
+    private class ByLabel implements Predicate<QueryRow> {
         private String uuid;
         public ByLabel(String labelId) {
             this.uuid = labelId;
