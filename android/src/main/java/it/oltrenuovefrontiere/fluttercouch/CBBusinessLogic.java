@@ -186,7 +186,7 @@ public class CBBusinessLogic {
                         Map<String, Object> props = new HashMap<String, Object>();
                         props.putAll(doc.getProperties());
                         props.put("blobURL", androidPath); // just-in-time
-                        props.put("localImagePath", androidPath); // temp
+                        props.put("localImagePath", androidPath); // in case user updates entry, this is used as new/changed attachment
                         results.add(props);
                     } else {
                         results.add(doc.getProperties());
