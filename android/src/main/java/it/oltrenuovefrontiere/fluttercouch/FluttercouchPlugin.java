@@ -3,9 +3,10 @@ package it.oltrenuovefrontiere.fluttercouch;
 import android.content.Context;
 import android.util.Log;
 
+import com.couchbase.lite.android.AndroidContext;
 import com.couchbase.lite.CouchbaseLiteException;
 // import com.couchbase.lite.Query;
-import com.couchbase.lite.android.AndroidContext;
+
 
 import org.json.JSONObject;
 
@@ -49,9 +50,8 @@ public class FluttercouchPlugin implements MethodCallHandler {
         //final MethodChannel jsonChannel = new MethodChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouchJson", JSONMethodCodec.INSTANCE);
         //jsonChannel.setMethodCallHandler(new FluttercouchPlugin());
 
-        // D.A. removed for now
-        // final EventChannel eventChannel = new EventChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouch/replicationEventChannel");
-        // eventChannel.setStreamHandler(new ReplicationEventListener(flutterCouchPlugin.mCbManager));
+        final EventChannel eventChannel = new EventChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouch/replicationEventChannel");
+        eventChannel.setStreamHandler(new ReplicationEventSpy(mCbManager));
     }
 
     @Override

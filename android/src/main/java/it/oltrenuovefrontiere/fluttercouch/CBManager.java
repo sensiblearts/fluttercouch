@@ -30,6 +30,15 @@ import java.nio.ByteBuffer;
 
 // SEE: https://docs.couchbase.com/couchbase-lite/1.4/java.html#manager
 
+
+    // class MySpy implements ReplicationEventSpy {
+    //     @Override
+    //     public void onChanged(Replication.ChangeEvent event) {
+    //         // System.out.println(event.toString());
+    //         System.out.println(event);
+    //     }
+    // }
+
 class ReplicatorConfiguration {
     String token;
     String username;
@@ -59,8 +68,18 @@ class Replicator {
     private ReplicatorConfiguration mConfig = null;
     private Replication mPush = null;
     private Replication mPull = null;
+    private ReplicationEventSpy mEventSpy = null;
     public Boolean isConfigured() {
         return !(mConfig == null);
+    }
+    ListenerToken addChangeListener(ReplicationEventSpy eventSpy) {
+        mEventSpy = eventSpy;
+        // TODO: generate a UNIQUE token and keep a map of listeners
+        return new ListenerToken("aToken");
+    }
+    void removeChangeListener(ListenerToken token) {
+        // TODO: use map of listeneers to remove
+        mEventSpy = null; // TODO: couchbase remove any remaining listeners
     }
     // call default constructor, then init().
     // TODO: enable authenticators or use the token header thing
@@ -90,7 +109,8 @@ class Replicator {
         System.out.println(mConfig.token);
         
         if (mPush != null) {
-            mPush.setContinuous(mConfig.continuous);
+            // mPush.setContinuous(mConfig.continuous);
+            mPush.setContinuous(true);
             Map<String, Object> pushHeaders = mPush.getHeaders();
             pushHeaders.put("X-Auth-CouchDB-UserName", mConfig.username);
             pushHeaders.put("X-Auth-CouchDB-Token",mConfig.token);
@@ -98,7 +118,8 @@ class Replicator {
             mPush.setHeaders(pushHeaders);
         }
         if (mPull != null) {
-            mPull.setContinuous(mConfig.continuous);
+            // mPull.setContinuous(mConfig.continuous);
+            mPull.setContinuous(true);
             Map<String, Object> pullHeaders = mPull.getHeaders();
             pullHeaders.put("X-Auth-CouchDB-UserName", mConfig.username);
             pullHeaders.put("X-Auth-CouchDB-Token",mConfig.token);
@@ -106,12 +127,35 @@ class Replicator {
             mPull.setHeaders(pullHeaders);
         }
     }
+    // void start(ReplicationEventSpy eventSpy) {
+    //     mEventSpy = eventSpy;
     void start() {
-        if (mPush != null) mPush.start();
-        if (mPull != null) mPull.start();
+         if (mPush != null) {
+            if (mEventSpy != null) {
+                mPush.addChangeListener(new Replication.ChangeListener() {
+                    @Override
+                    public void changed(Replication.ChangeEvent event) {
+                        mEventSpy.changed(event);
+                    }
+                });
+            }
+            mPush.start();
+        }
+        if (mPull != null) {
+            if (mEventSpy != null) {
+                mPull.addChangeListener(new Replication.ChangeListener() {
+                    @Override
+                    public void changed(Replication.ChangeEvent event) {
+                        mEventSpy.changed(event);
+                    }
+                });
+            }
+            mPull.start();
+        }
     }
 
     void stop() {
+        // TODO: remove change listeners?
         if (mPush != null) mPush.stop();
         if (mPull != null) mPull.stop();
     }
@@ -339,7 +383,9 @@ public class CBManager {
 
    public void startReplicator() {
       Replicator replicator = mReplicator.get(defaultDatabase);
-       replicator.start();
+      
+    //   replicator.start(new MySpy());
+      replicator.start();
    }
 
    public void stopReplicator() {
