@@ -141,21 +141,6 @@ public class FluttercouchPlugin implements MethodCallHandler {
                     result.error("errArg", "invalid arguments", null);
                 }
                 break;
-            // case("getNamedAttachment"):
-            //     if (call.hasArgument("id") && call.hasArgument("name")) {
-            //         _id = call.argument("id");
-            //         _name = call.argument("name");
-            //         try {
-            //             Map<String,Object> resultMap = mCbManager.getNamedAttachment(_id, _name);
-            //             result.success(resultMap);
-            //         } catch (Exception e) {
-            //             e.printStackTrace();
-            //             result.error("errSave", "error getting attachment", e.toString());
-            //         }
-            //     } else {
-            //         result.error("errArg", "invalid arguments", null);
-            //     }
-            //     break;
             case ("createReplicatorWithName"):
                 String _repname = call.arguments();
                 try {
@@ -166,11 +151,6 @@ public class FluttercouchPlugin implements MethodCallHandler {
                     result.error("errReplcreate", "error creating configuring replicator", null);
                 }
                 break;
-//         if (_config.containsKey("username") 
-//                 && _config.containsKey("password")
-//                 && _config.containsKey("url")
-//                 && _config.containsKey("synctype")
-//                 && _config.containsKey("continuous")) {
             case ("configureReplicator"):
                 Map<String, String> _config = call.arguments();
                 try {

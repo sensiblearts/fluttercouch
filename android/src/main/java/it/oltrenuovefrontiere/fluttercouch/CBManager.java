@@ -30,15 +30,6 @@ import java.nio.ByteBuffer;
 
 // SEE: https://docs.couchbase.com/couchbase-lite/1.4/java.html#manager
 
-
-    // class MySpy implements ReplicationEventSpy {
-    //     @Override
-    //     public void onChanged(Replication.ChangeEvent event) {
-    //         // System.out.println(event.toString());
-    //         System.out.println(event);
-    //     }
-    // }
-
 class ReplicatorConfiguration {
     String token;
     String username;
@@ -109,8 +100,7 @@ class Replicator {
         System.out.println(mConfig.token);
         
         if (mPush != null) {
-            // mPush.setContinuous(mConfig.continuous);
-            mPush.setContinuous(true);
+            mPush.setContinuous(mConfig.continuous);
             Map<String, Object> pushHeaders = mPush.getHeaders();
             pushHeaders.put("X-Auth-CouchDB-UserName", mConfig.username);
             pushHeaders.put("X-Auth-CouchDB-Token",mConfig.token);
@@ -118,8 +108,7 @@ class Replicator {
             mPush.setHeaders(pushHeaders);
         }
         if (mPull != null) {
-            // mPull.setContinuous(mConfig.continuous);
-            mPull.setContinuous(true);
+            mPull.setContinuous(mConfig.continuous);
             Map<String, Object> pullHeaders = mPull.getHeaders();
             pullHeaders.put("X-Auth-CouchDB-UserName", mConfig.username);
             pullHeaders.put("X-Auth-CouchDB-Token",mConfig.token);
@@ -127,8 +116,6 @@ class Replicator {
             mPull.setHeaders(pullHeaders);
         }
     }
-    // void start(ReplicationEventSpy eventSpy) {
-    //     mEventSpy = eventSpy;
     void start() {
          if (mPush != null) {
             if (mEventSpy != null) {
@@ -153,7 +140,6 @@ class Replicator {
             mPull.start();
         }
     }
-
     void stop() {
         // TODO: remove change listeners?
         if (mPush != null) mPush.stop();
@@ -294,62 +280,13 @@ public class CBManager {
         return resultMap;
     }
 
-    // public static byte[] toByteArray(InputStream in) throws IOException {
-	// 	ByteArrayOutputStream os = new ByteArrayOutputStream();
-	// 	byte[] buffer = new byte[1024];
-	// 	int len;
-	// 	while ((len = in.read(buffer)) != -1) {
-	// 		os.write(buffer, 0, len);
-	// 	}
-    //     Integer size = new Integer(len);
-    //     return os.toByteArray();
-	// }
-
-    // public Map<String, Object> getNamedAttachment(String _id, String _name) throws CouchbaseLiteException {
-    //     Database defaultDb = mDatabase.get(defaultDatabase);
-    //     HashMap<String, Object> resultMap = new HashMap<String, Object>();
-    //     if (defaultDb != null) {
-    //         Document doc = defaultDb.getDocument(_id);
-    //         if (doc != null) {
-    //             try {
-    //                 Revision rev = doc.getCurrentRevision();
-    //                 Attachment att = rev.getAttachment(_name); // e.g., "entry.jpg"
-    //                 if (att != null) {
-    //                     InputStream is = att.getContent();
-    //                     byte[] attBytes = toByteArray(is);
-    //                     resultMap.put("attachment",  attBytes);
-    //                     Map<String,Object> attMap = (Map<String,Object>)doc.getProperties().get("_attachments");
-    //                     System.out.println("ATT MAP");
-    //                     System.out.println(attMap.toString());
-    //                 } else {
-    //                     resultMap.put("attachment", null);
-    //                 }
-    //                 // TODO
-    //                 // att.get mime to add to map
-    //                 resultMap.put("_id", _id);
-    //             } catch (Exception e) {
-    //                 e.printStackTrace();
-    //             }
-    //         } else {
-    //             resultMap.put("_id", _id);
-    //             resultMap.put("attachment", null);
-    //         }
-           
-    //     }
-    //     return resultMap;
-    // }
-
-    // public boolean removeNamedAttachment(String _id, String _name) throws CouchbaseLiteException {
-    //     return false;
-    // }
-
     public void initDatabaseWithName(String _name) throws CouchbaseLiteException {
        if (!mDatabase.containsKey(_name)) {
            defaultDatabase = _name;
            Database db = _manager.getDatabase(_name);
            mDatabase.put(_name, db);
        }
-   }
+    }
 
     public void createReplicatorWithName(String _name) throws CouchbaseLiteException {
        if (!mReplicator.containsKey(_name)) {
@@ -369,7 +306,7 @@ public class CBManager {
                 _config.get("username"),
                 new URL(_config.get("url")),
                 _config.get("synctype"),
-                _config.get("continuous") == "true" ? true : false,
+                _config.get("continuous").equals("true"),
                 (Authenticator)null, // Need to look into couchbase 1.4 code to see if they have an authenticator that sets header tokens
                 mDatabase.get(defaultDatabase));
             Replicator replicator = mReplicator.get(defaultDatabase);
@@ -383,8 +320,6 @@ public class CBManager {
 
    public void startReplicator() {
       Replicator replicator = mReplicator.get(defaultDatabase);
-      
-    //   replicator.start(new MySpy());
       replicator.start();
    }
 
