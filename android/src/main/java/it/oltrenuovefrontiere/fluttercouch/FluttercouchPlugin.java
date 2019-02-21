@@ -51,7 +51,7 @@ public class FluttercouchPlugin implements MethodCallHandler {
         //jsonChannel.setMethodCallHandler(new FluttercouchPlugin());
 
         final EventChannel eventChannel = new EventChannel(registrar.messenger(), "it.oltrenuovefrontiere.fluttercouch/replicationEventChannel");
-        eventChannel.setStreamHandler(new ReplicationEventSpy(mCbManager));
+        eventChannel.setStreamHandler(new ReplicationEventListener_1_4(mCbManager));
     }
 
     @Override

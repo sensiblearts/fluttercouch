@@ -59,11 +59,11 @@ class Replicator {
     private ReplicatorConfiguration mConfig = null;
     private Replication mPush = null;
     private Replication mPull = null;
-    private ReplicationEventSpy mEventSpy = null;
+    private ReplicationEventListener_1_4 mEventSpy = null;
     public Boolean isConfigured() {
         return !(mConfig == null);
     }
-    ListenerToken addChangeListener(ReplicationEventSpy eventSpy) {
+    ListenerToken addChangeListener(ReplicationEventListener_1_4 eventSpy) {
         mEventSpy = eventSpy;
         // TODO: generate a UNIQUE token and keep a map of listeners
         return new ListenerToken("aToken");

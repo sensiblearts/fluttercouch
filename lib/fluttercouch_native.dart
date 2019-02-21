@@ -2,13 +2,11 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:fluttercouch/fluttercouch.dart';
 
-// abstract class Fluttercouch extends Fluttercouch {
 class FluttercouchNative extends Fluttercouch {
- 
 
   ///////////////////////////////////////////////////////////////////////
   ///
-  /// App-specific methods to customize this plugin
+  /// Use case-specific methods to customize this plugin
   ///
   //////////////////////////////////////////////////////////////////////
 

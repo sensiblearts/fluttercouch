@@ -12,13 +12,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class ReplicationEventSpy implements EventChannel.StreamHandler, ChangeListener {
+public class ReplicationEventListener_1_4 implements EventChannel.StreamHandler, ChangeListener {
 
     private CBManager mCBmanager;
     private ListenerToken mListenerToken;
     private EventChannel.EventSink mEventSink;
 
-    ReplicationEventSpy(CBManager _cbManager) {
+    ReplicationEventListener_1_4(CBManager _cbManager) {
         this.mCBmanager = _cbManager;
     }
 
