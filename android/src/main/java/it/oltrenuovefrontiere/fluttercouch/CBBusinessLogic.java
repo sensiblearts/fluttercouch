@@ -79,10 +79,11 @@ public class CBBusinessLogic {
                         List<Object> key = new ArrayList<Object>();
                         key.add(document.get("when")); // keys.get(0)
                         key.add(document.get("labelId")); // keys.get(1)
+                        key.add(document.get("paperId")); // keys.get(2)
                         emitter.emit(key, null);
                     }
                 }
-            }, "3");
+            }, "4");
             return true;
         } else {
             return false;
@@ -162,6 +163,65 @@ public class CBBusinessLogic {
             // System.out.println("CB startDate " + startDate);
             // System.out.println("CB labelId " + labelId);
             // System.out.println("CB startkey " + startKey);
+            try {
+                QueryEnumerator result = query.run();
+                System.out.println("in qery, result: " + result.toString());
+                for (Iterator<QueryRow> it = result; it.hasNext(); ) {
+                    QueryRow row = it.next();
+                    // if (row.getConflictingRevisions().size() > 0) {
+                    //     Log.w("MYAPP", "Conflict in document: %s", row.getDocumentId());
+                    //     beginConflictResolution(row.getDocument());
+                    // }
+                    Document doc = row.getDocument();
+                    // Couchbase Lite may have changed the client side file and hashed filename
+                    // of any attachment, because it may habe sync'd with a doc that was modified
+                    // by another client; who e.g., replaced the same attachment name with a 
+                    // different file, which would result in a different hash and different filename. 
+                    // Therefore, we load the client-side location of the attachment, just-in-time:
+                    Revision rev = doc.getCurrentRevision();           
+                    Attachment att = rev.getAttachment("entry.jpg"); // TODO: Pass in
+                    if (att != null) {
+                        URL url = att.getContentURL(); // cb-lite file path to attachment
+                        String urlStr = url.toString();
+                        String androidPath = urlStr.substring(5, urlStr.length()); // "file:..."
+                        Map<String, Object> props = new HashMap<String, Object>();
+                        props.putAll(doc.getProperties());
+                        props.put("blobURL", androidPath); // just-in-time
+                        props.put("localImagePath", androidPath); // in case user updates entry, this is used as new/changed attachment
+                        results.add(props);
+                    } else {
+                        results.add(doc.getProperties());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return results;
+    }
+
+    private class ByPaper implements Predicate<QueryRow> {
+        private String uuid;
+        public ByPaper(String paperId) {
+            this.uuid = paperId;
+        }
+        public boolean apply(QueryRow row) {
+            LazyJsonArray<Object> keys = (LazyJsonArray<Object>)row.getKey();
+            if (this.uuid.equals((String)keys.get(2))) { // paperId
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    private ArrayList<Map<String, Object>> getEntriesForPaper(String paperId) {
+        ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
+        if (mCbManager != null) { // needed?
+            Database db = mCbManager.getDatabase();
+            Query query = db.getView("entries").createQuery();
+            query.setDescending(true);
+            query.setPostFilter(new ByPaper(paperId));
             try {
                 QueryEnumerator result = query.run();
                 System.out.println("in qery, result: " + result.toString());
@@ -362,6 +422,10 @@ public class CBBusinessLogic {
                 String startDate = call.argument("startDate");
                 String labelId = call.argument("labelId");
                 result.success(getEntriesForLabel(rowsPerPage, startDate, labelId));
+                break;
+            case ("getEntriesForPaper"):
+                String paperId = call.argument("paperId");
+                result.success(getEntriesForPaper(paperId));
                 break;
             case ("getCategories"):
                 result.success(getCategories());

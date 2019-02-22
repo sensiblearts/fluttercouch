@@ -30,7 +30,19 @@ class FluttercouchNative extends Fluttercouch {
       });
       return result;
     } on PlatformException {
-      throw 'unable to get all entries';
+      throw 'unable to get entries for label';
+    }
+  }
+
+  Future<List<dynamic>> getEntriesForPaper( /* int rowsPerPage, */ String paperId) async {
+    try {
+      final List<dynamic> result = await Fluttercouch.methodChannel.invokeMethod(
+          'getEntriesForPaper', <String, dynamic>{
+        'paperId': paperId
+      });
+      return result;
+    } on PlatformException {
+      throw 'unable to get entries for paper';
     }
   }
 
