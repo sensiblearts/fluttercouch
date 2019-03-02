@@ -137,21 +137,57 @@ public class CBBusinessLogic {
         }
     }
 
-    private ArrayList<Map<String, Object>> getEntriesForLabel(int rowsPerPage, String startDate, String labelId) {
+    private class ByFuture implements Predicate<QueryRow> {
+        private String fromDate;
+        public ByFuture(String after) {
+            this.fromDate = after;
+        }
+        public boolean apply(QueryRow row) {
+            LazyJsonArray<Object> keys = (LazyJsonArray<Object>)row.getKey();
+            if (this.fromDate.compareTo((String)keys.get(0)) < 0) { // when
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    private class ByPast implements Predicate<QueryRow> {
+        private String fromDate;
+        public ByPast(String before) {
+            this.fromDate = before;
+        }
+        public boolean apply(QueryRow row) {
+            LazyJsonArray<Object> keys = (LazyJsonArray<Object>)row.getKey();
+            if (this.fromDate.compareTo((String)keys.get(0)) >= 0) { // when
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    private ArrayList<Map<String, Object>> getEntriesForLabel(int rowsPerPage, String startDate, String labelId, boolean isFuture, String cutoffDate) {
         ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         if (mCbManager != null) { // needed?
             Database db = mCbManager.getDatabase();
             Query query = db.getView("entries").createQuery();
-            query.setDescending(true);
+            // query.setDescending(true);
             List<Object> startKey = new ArrayList<Object>();
             if (startDate != null) {
                 startKey.add(startDate);
             } else {
                 startKey.add(null); // so key array index is correct
             }
-            if (labelId != null) {
+            if (labelId != null) { // past and future entries for this label
+                query.setDescending(true);
                 startKey.add(labelId);
                 query.setPostFilter(new ByLabel(labelId));
+            } else if (isFuture) { // only future entries, any label
+                query.setDescending(false);
+                query.setPostFilter(new ByFuture(cutoffDate)); 
+            } else { // only past entries
+                query.setDescending(true);
+                query.setPostFilter(new ByPast(cutoffDate));             
             }
             if (startDate != null) {
                 query.setStartKey(startKey);
@@ -421,7 +457,9 @@ public class CBBusinessLogic {
                 int rowsPerPage = call.argument("rowsPerPage");
                 String startDate = call.argument("startDate");
                 String labelId = call.argument("labelId");
-                result.success(getEntriesForLabel(rowsPerPage, startDate, labelId));
+                boolean isFuture = call.argument("isFuture");
+                String cutoffDate = call.argument("cutoffDate");
+                result.success(getEntriesForLabel(rowsPerPage, startDate, labelId, isFuture, cutoffDate));
                 break;
             case ("getEntriesForPaper"):
                 String paperId = call.argument("paperId");

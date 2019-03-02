@@ -20,13 +20,16 @@ class FluttercouchNative extends Fluttercouch {
     }
   }
 
-  Future<List<dynamic>> getEntriesForLabel(int rowsPerPage, String startDate, String labelId) async {
+  Future<List<dynamic>> getEntriesForLabel(int rowsPerPage, String startDate, String labelId, bool isFuture, String cutoffDate) async {
     try {
+      // String cutoffDate = DateTime.now().toIso8601String();
       final List<dynamic> result = await Fluttercouch.methodChannel.invokeMethod(
           'getEntriesForLabel', <String, dynamic>{
         'rowsPerPage': rowsPerPage,
-        'startDate': startDate,
-        'labelId': labelId
+        'startDate': startDate, // for rows batch / pagination
+        'labelId': labelId,
+        'isFuture': isFuture, // vs. past 
+        'cutoffDate':cutoffDate, // for future/past
       });
       return result;
     } on PlatformException {
