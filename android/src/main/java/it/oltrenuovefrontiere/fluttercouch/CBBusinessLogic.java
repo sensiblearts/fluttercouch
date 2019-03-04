@@ -78,12 +78,13 @@ public class CBBusinessLogic {
                     if (document.get("doc").equals("ent")) { // is entry
                         List<Object> key = new ArrayList<Object>();
                         key.add(document.get("when")); // keys.get(0)
-                        key.add(document.get("labelId")); // keys.get(1)
-                        key.add(document.get("paperId")); // keys.get(2)
+                        key.add(document.get("categoryId")); // keys.get(1)
+                        key.add(document.get("labelId")); // keys.get(2)
+                        key.add(document.get("paperId")); // keys.get(3)
                         emitter.emit(key, null);
                     }
                 }
-            }, "4");
+            }, "5");
             return true;
         } else {
             return false;
@@ -121,15 +122,14 @@ public class CBBusinessLogic {
     // Also, if labelId is not null, we have to build a Predicate<QueryRow>, e.g., ByLabel. (see by Category)
     // I assume Skip will happen AFTER predicate is applied?
 
-    private class ByLabel implements Predicate<QueryRow> {
+    private class EByCategory implements Predicate<QueryRow> {
         private String uuid;
-        public ByLabel(String labelId) {
-            this.uuid = labelId;
+        public EByCategory(String categoryId) {
+            this.uuid = categoryId;
         }
         public boolean apply(QueryRow row) {
-            // Weird that this is the way you have to do it if key is array..
             LazyJsonArray<Object> keys = (LazyJsonArray<Object>)row.getKey();
-            if (this.uuid.equals((String)keys.get(1))) { // labelId
+            if (this.uuid.equals((String)keys.get(1))) { // categorylId
                 return true;
             } else {
                 return false;
@@ -137,9 +137,25 @@ public class CBBusinessLogic {
         }
     }
 
-    private class ByFuture implements Predicate<QueryRow> {
+    private class EByLabel implements Predicate<QueryRow> {
+        private String uuid;
+        public EByLabel(String labelId) {
+            this.uuid = labelId;
+        }
+        public boolean apply(QueryRow row) {
+            // Weird that this is the way you have to do it if key is array..
+            LazyJsonArray<Object> keys = (LazyJsonArray<Object>)row.getKey();
+            if (this.uuid.equals((String)keys.get(2))) { // labelId
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    private class EByFuture implements Predicate<QueryRow> {
         private String fromDate;
-        public ByFuture(String after) {
+        public EByFuture(String after) {
             this.fromDate = after;
         }
         public boolean apply(QueryRow row) {
@@ -151,9 +167,9 @@ public class CBBusinessLogic {
             }
         }
     }
-    private class ByPast implements Predicate<QueryRow> {
+    private class EByPast implements Predicate<QueryRow> {
         private String fromDate;
-        public ByPast(String before) {
+        public EByPast(String before) {
             this.fromDate = before;
         }
         public boolean apply(QueryRow row) {
@@ -166,28 +182,33 @@ public class CBBusinessLogic {
         }
     }
 
-    private ArrayList<Map<String, Object>> getEntriesForLabel(int rowsPerPage, String startDate, String labelId, boolean isFuture, String cutoffDate) {
+    private ArrayList<Map<String, Object>> getEntries(int rowsPerPage, String startDate, String categoryId, String labelId, boolean isFuture, String cutoffDate) {
         ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         if (mCbManager != null) { // needed?
             Database db = mCbManager.getDatabase();
             Query query = db.getView("entries").createQuery();
-            // query.setDescending(true);
             List<Object> startKey = new ArrayList<Object>();
             if (startDate != null) {
                 startKey.add(startDate);
             } else {
                 startKey.add(null); // so key array index is correct
             }
-            if (labelId != null) { // past and future entries for this label
+            if (categoryId != null) {
                 query.setDescending(true);
-                startKey.add(labelId);
-                query.setPostFilter(new ByLabel(labelId));
+                startKey.add(categoryId);
+                if (labelId != null) { // past and future entries for this label
+                    startKey.add(labelId);
+                    query.setPostFilter(new EByLabel(labelId));
+                } else {
+                    query.setPostFilter(new EByCategory(categoryId));
+                }
             } else if (isFuture) { // only future entries, any label
                 query.setDescending(false);
-                query.setPostFilter(new ByFuture(cutoffDate)); 
+                query.setPostFilter(new EByFuture(cutoffDate)); 
             } else { // only past entries
+            System.out.println("PAST ENTRIES, JAVA");
                 query.setDescending(true);
-                query.setPostFilter(new ByPast(cutoffDate));             
+                query.setPostFilter(new EByPast(cutoffDate));             
             }
             if (startDate != null) {
                 query.setStartKey(startKey);
@@ -236,9 +257,9 @@ public class CBBusinessLogic {
         return results;
     }
 
-    private class ByPaper implements Predicate<QueryRow> {
+    private class EByPaper implements Predicate<QueryRow> {
         private String uuid;
-        public ByPaper(String paperId) {
+        public EByPaper(String paperId) {
             this.uuid = paperId;
         }
         public boolean apply(QueryRow row) {
@@ -257,7 +278,7 @@ public class CBBusinessLogic {
             Database db = mCbManager.getDatabase();
             Query query = db.getView("entries").createQuery();
             query.setDescending(true);
-            query.setPostFilter(new ByPaper(paperId));
+            query.setPostFilter(new EByPaper(paperId));
             try {
                 QueryEnumerator result = query.run();
                 System.out.println("in qery, result: " + result.toString());
@@ -453,13 +474,14 @@ public class CBBusinessLogic {
                         result.success(false);    
                 }
                 break;
-            case ("getEntriesForLabel"):
+            case ("getEntries"):
                 int rowsPerPage = call.argument("rowsPerPage");
                 String startDate = call.argument("startDate");
+                String catId = call.argument("categoryId");
                 String labelId = call.argument("labelId");
                 boolean isFuture = call.argument("isFuture");
                 String cutoffDate = call.argument("cutoffDate");
-                result.success(getEntriesForLabel(rowsPerPage, startDate, labelId, isFuture, cutoffDate));
+                result.success(getEntries(rowsPerPage, startDate, catId, labelId, isFuture, cutoffDate));
                 break;
             case ("getEntriesForPaper"):
                 String paperId = call.argument("paperId");
