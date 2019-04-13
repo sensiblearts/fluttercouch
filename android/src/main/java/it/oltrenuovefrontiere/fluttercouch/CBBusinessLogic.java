@@ -250,6 +250,11 @@ public class CBBusinessLogic {
                             props.put("blobURL", androidPath); // just-in-time
                             props.put("localImagePath", androidPath); // in case user updates entry, this is used as new/changed attachment
                         }
+                        // April 9, 2019: No longer storing att_lg in couchbase / couchdb.
+                        // Instead, it's stored locally.
+                        // However, if we ever change an entry's image on the SERVER, then we 
+                        // will need to have it sync with the phone. I can do this with the existing code.
+                        // I think it will simply work with the new design of using local images for zoom.
                         if (att_lg != null) {
                             URL url = att_lg.getContentURL(); // cb-lite file path to attachment
                             String urlStr = url.toString();
