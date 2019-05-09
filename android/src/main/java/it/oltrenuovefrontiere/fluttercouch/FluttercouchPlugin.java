@@ -2,6 +2,8 @@ package it.oltrenuovefrontiere.fluttercouch;
 
 import android.content.Context;
 import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.couchbase.lite.android.AndroidContext;
 import com.couchbase.lite.CouchbaseLiteException;
@@ -54,9 +56,58 @@ public class FluttercouchPlugin implements MethodCallHandler {
         eventChannel.setStreamHandler(new ReplicationEventListener_1_4(mCbManager));
     }
 
+  // May 9, 2019, copied from version 6 of image_picker plugin because of
+  // new requirement that result response is on the platform thread:
+  //
+  // MethodChannel.Result wrapper that responds on the platform thread.
+  private static class MethodResultWrapper implements MethodChannel.Result {
+    private MethodChannel.Result methodResult;
+    private Handler handler;
+
+    MethodResultWrapper(MethodChannel.Result result) {
+      methodResult = result;
+      handler = new Handler(Looper.getMainLooper());
+    }
+
     @Override
-    public void onMethodCall(MethodCall call, Result result) {
+    public void success(final Object result) {
+      handler.post(
+          new Runnable() {
+            @Override
+            public void run() {
+              methodResult.success(result);
+            }
+          });
+    }
+
+    @Override
+    public void error(
+        final String errorCode, final String errorMessage, final Object errorDetails) {
+      handler.post(
+          new Runnable() {
+            @Override
+            public void run() {
+              methodResult.error(errorCode, errorMessage, errorDetails);
+            }
+          });
+    }
+
+    @Override
+    public void notImplemented() {
+      handler.post(
+          new Runnable() {
+            @Override
+            public void run() {
+              methodResult.notImplemented();
+            }
+          });
+    }
+  }
+
+    @Override
+    public void onMethodCall(MethodCall call, Result rawResult) {
         String _id;
+        MethodChannel.Result result = new MethodResultWrapper(rawResult);
         switch (call.method) {
             case ("initDatabaseWithName"):
                 String _name = call.arguments();

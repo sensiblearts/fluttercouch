@@ -1,5 +1,8 @@
 package it.oltrenuovefrontiere.fluttercouch;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.replicator.Replication;
 import com.couchbase.lite.replicator.ReplicationStateTransition;
@@ -18,6 +21,44 @@ public class ReplicationEventListener_1_4 implements EventChannel.StreamHandler,
     private ListenerToken mListenerToken;
     private EventChannel.EventSink mEventSink;
 
+    private static class EventSinkWrapper implements EventChannel.EventSink {
+        private EventChannel.EventSink eventSink;
+        private Handler handler;
+
+        EventSinkWrapper(EventChannel.EventSink sink) {
+        eventSink = sink;
+        handler = new Handler(Looper.getMainLooper());
+        }
+
+        @Override
+        public void success(final Object result) {
+        handler.post(
+            new Runnable() {
+                @Override
+                public void run() {
+                eventSink.success(result);
+                }
+            });
+        }
+
+        @Override
+        public void error(
+            final String errorCode, final String errorMessage, final Object errorDetails) {
+        handler.post(
+            new Runnable() {
+                @Override
+                public void run() {
+                eventSink.error(errorCode, errorMessage, errorDetails);
+                }
+            });
+        }
+
+        @Override
+        public void endOfStream() {
+            eventSink.endOfStream();
+        }
+    }
+
     ReplicationEventListener_1_4(CBManager _cbManager) {
         this.mCBmanager = _cbManager;
     }
@@ -28,7 +69,9 @@ public class ReplicationEventListener_1_4 implements EventChannel.StreamHandler,
 
     @Override
     public void onListen(Object o, final EventChannel.EventSink eventSink) {
-        mEventSink = eventSink;
+        // mEventSink = eventSink;
+        mEventSink = new EventSinkWrapper(eventSink);
+
         mListenerToken = mCBmanager.getReplicator().addChangeListener(this);
     }
 
