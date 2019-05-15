@@ -206,7 +206,6 @@ public class CBBusinessLogic {
                 query.setDescending(false);
                 query.setPostFilter(new EByFuture(cutoffDate)); 
             } else { // only past entries
-            System.out.println("PAST ENTRIES, JAVA");
                 query.setDescending(true);
                 query.setPostFilter(new EByPast(cutoffDate));             
             }
@@ -238,8 +237,9 @@ public class CBBusinessLogic {
                     Revision rev = doc.getCurrentRevision();           
                     Map<String, Object> props = new HashMap<String, Object>();
                     Attachment att_sm = rev.getAttachment("sm_entry.jpg"); // TODO: Pass in
-                    Attachment att_lg = rev.getAttachment("lg_entry.jpg"); // TODO: Pass in
-                    if (att_sm == null && att_lg == null) {
+                    // Attachment att_lg = rev.getAttachment("lg_entry.jpg"); // TODO: Pass in
+                    Attachment att_aud = rev.getAttachment("audio.mp3");
+                    if (att_sm == null && att_aud == null) {
                         results.add(doc.getProperties());
                     } else {
                         props.putAll(doc.getProperties());
@@ -255,12 +255,18 @@ public class CBBusinessLogic {
                         // However, if we ever change an entry's image on the SERVER, then we 
                         // will need to have it sync with the phone. I can do this with the existing code.
                         // I think it will simply work with the new design of using local images for zoom.
-                        if (att_lg != null) {
-                            URL url = att_lg.getContentURL(); // cb-lite file path to attachment
+                        // if (att_lg != null) {
+                        //     URL url = att_lg.getContentURL(); // cb-lite file path to attachment
+                        //     String urlStr = url.toString();
+                        //     String androidPath = urlStr.substring(5, urlStr.length()); // "file:..."
+                        //     props.put("bigBlobURL", androidPath); // just-in-time
+                        //     props.put("bigImagePath", androidPath); // in case user updates entry, this is used as new/changed attachment
+                        // }
+                        if (att_aud != null) {
+                            URL url = att_aud.getContentURL(); // cb-lite file path to attachment
                             String urlStr = url.toString();
                             String androidPath = urlStr.substring(5, urlStr.length()); // "file:..."
-                            props.put("bigBlobURL", androidPath); // just-in-time
-                            props.put("bigImagePath", androidPath); // in case user updates entry, this is used as new/changed attachment
+                            props.put("audioUrl", androidPath); // just-in-time
                         }
                         results.add(props);
                     }
