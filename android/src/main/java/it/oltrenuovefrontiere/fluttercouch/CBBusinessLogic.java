@@ -285,7 +285,7 @@ public class CBBusinessLogic {
         }
         public boolean apply(QueryRow row) {
             LazyJsonArray<Object> keys = (LazyJsonArray<Object>)row.getKey();
-            if (this.uuid.equals((String)keys.get(2))) { // paperId
+            if (this.uuid.equals((String)keys.get(3))) { // paperId
                 return true;
             } else {
                 return false;
@@ -315,19 +315,49 @@ public class CBBusinessLogic {
                     // by another client; who e.g., replaced the same attachment name with a 
                     // different file, which would result in a different hash and different filename. 
                     // Therefore, we load the client-side location of the attachment, just-in-time:
+                    // Revision rev = doc.getCurrentRevision();           
+                    // Attachment att = rev.getAttachment("sm_entry.jpg"); // TODO: Pass in
+                    // Attachment att_aud = rev.getAttachment("audio.mp3");
+                    //  if (att_sm == null && att_aud == null) {
+                    //     results.add(doc.getProperties());
+                    // } else {
+                    //     if (att != null) {
+                    //         URL url = att.getContentURL(); // cb-lite file path to attachment
+                    //         String urlStr = url.toString();
+                    //         String androidPath = urlStr.substring(5, urlStr.length()); // "file:..."
+                    //         Map<String, Object> props = new HashMap<String, Object>();
+                    //         props.putAll(doc.getProperties());
+                    //         props.put("blobURL", androidPath); // just-in-time
+                    //         props.put("localImagePath", androidPath); // in case user updates entry, this is used as new/changed attachment
+                    //         results.add(props);
+                    //     } else {
+                    //         results.add(doc.getProperties());
+                    //     }
+                    
+                    // duplicate of the code fo getEntries
                     Revision rev = doc.getCurrentRevision();           
-                    Attachment att = rev.getAttachment("entry.jpg"); // TODO: Pass in
-                    if (att != null) {
-                        URL url = att.getContentURL(); // cb-lite file path to attachment
-                        String urlStr = url.toString();
-                        String androidPath = urlStr.substring(5, urlStr.length()); // "file:..."
-                        Map<String, Object> props = new HashMap<String, Object>();
-                        props.putAll(doc.getProperties());
-                        props.put("blobURL", androidPath); // just-in-time
-                        props.put("localImagePath", androidPath); // in case user updates entry, this is used as new/changed attachment
-                        results.add(props);
-                    } else {
+                    Map<String, Object> props = new HashMap<String, Object>();
+                    Attachment att_sm = rev.getAttachment("sm_entry.jpg"); // TODO: Pass in
+                    // Attachment att_lg = rev.getAttachment("lg_entry.jpg"); // TODO: Pass in
+                    Attachment att_aud = rev.getAttachment("audio.mp3");
+                    if (att_sm == null && att_aud == null) {
                         results.add(doc.getProperties());
+                    } else {
+                        props.putAll(doc.getProperties());
+                        if (att_sm != null) {
+                            URL url = att_sm.getContentURL(); // cb-lite file path to attachment
+                            String urlStr = url.toString();
+                            String androidPath = urlStr.substring(5, urlStr.length()); // "file:..."
+                            props.put("blobURL", androidPath); // just-in-time
+                            props.put("localImagePath", androidPath); // in case user updates entry, this is used as new/changed attachment
+                        }
+                        if (att_aud != null) {
+                            URL url = att_aud.getContentURL(); // cb-lite file path to attachment
+                            String urlStr = url.toString();
+                            String androidPath = urlStr.substring(5, urlStr.length()); // "file:..."
+                            props.put("audioUrl", androidPath); // just-in-time
+                        }
+                        results.add(props);
                     }
                 }
             } catch (Exception e) {
