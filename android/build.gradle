@@ -19,12 +19,29 @@ rootProject.allprojects {
         maven {
             url "http://mobile.maven.couchbase.com/maven2/dev/"
         }
-    }
+        // Note: Relative paths will not work for flatDir, because
+        // the context is the main flutter app. This is needed so that
+        // the compile() in dependencies (below) can find the files.
+        flatDir {
+            dirs '/C:/Users/David/mvp/gjapp/cb-1.4.4-sources'
+        }
+    }  
 }
+
+
 
 apply plugin: 'com.android.library'
 
 android {
+    // We can no longer just use dependencies {} to bring in cb-1.4.4.
+    // We specify source so that I can modify the cb-1.4.4 code to use
+    // SSL cert from Letsencrypt.
+     sourceSets {
+        main {
+          java.srcDirs = ['src/main/java','../../cb-1.4.4-sources/core']
+        }
+    }
+
     compileSdkVersion 27
 
     defaultConfig {
@@ -36,8 +53,19 @@ android {
     }
 
     dependencies {
-        // implementation 'com.couchbase.lite:couchbase-lite-android-ee:1.4.4'
-        implementation 'com.couchbase.lite:couchbase-lite-android:1.4.4'
+        compile(name:'couchbase-lite-android-1.4.4', ext:'aar')
+        compile(name:'couchbase-lite-android-1.4.4-sources', ext:'jar')
+        compile(name:'couchbase-lite-java-listener-1.4.4-sources', ext:'jar')
+        implementation 'com.fasterxml.jackson.core:jackson-core:2.9.8'
+        implementation 'com.fasterxml.jackson.core:jackson-annotations:2.9.8'
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+        implementation 'com.squareup.okhttp3:okhttp:3.5.0'
+        implementation 'com.squareup.okhttp3:logging-interceptor:3.5.0'
+        implementation 'com.github.oxo42:stateless4j:2.5.0'
+        // implementation 'com.couchbase.lite:couchbase-lite-android-sqlite-default:1.2.1'
+        implementation 'com.couchbase.lite:couchbase-lite-android-sqlite-custom:1.4.4'
+        // the above is to make up for lack of:
+        // implementation 'com.couchbase.lite:couchbase-lite-android:1.4.4'
         testImplementation 'junit:junit:4.12'
         androidTestImplementation 'com.android.support.test:runner:1.0.2'
         androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'

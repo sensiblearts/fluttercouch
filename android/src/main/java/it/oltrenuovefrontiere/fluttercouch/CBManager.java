@@ -160,7 +160,7 @@ public class CBManager {
     private CBManager(AndroidContext context) {
              try {
                 _manager = new Manager(context, Manager.DEFAULT_OPTIONS);
-             } catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
     }
