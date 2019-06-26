@@ -11,8 +11,10 @@ import com.couchbase.lite.Attachment;
 import com.couchbase.lite.replicator.Replication;
 import com.couchbase.lite.auth.Authenticator;
 import com.couchbase.lite.auth.BasicAuthenticator;
-import com.couchbase.lite.android.AndroidContext;
 import com.couchbase.lite.util.Log;
+import com.couchbase.lite.android.AndroidContext;
+
+// import com.android.content.Context;
 
 import java.net.URL;
 import java.net.URI;
@@ -283,6 +285,8 @@ public class CBManager {
     public void initDatabaseWithName(String _name) throws CouchbaseLiteException {
        if (!mDatabase.containsKey(_name)) {
            defaultDatabase = _name;
+
+           // pass context here 
            Database db = _manager.getDatabase(_name);
            mDatabase.put(_name, db);
        }
